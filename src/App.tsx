@@ -1,26 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { Cpu, Zap, Brain, MessageSquare, Settings, Eye, Camera, Maximize } from 'lucide-react';
 
 const App: React.FC = () => {
   const [transcript, setTranscript] = useState<string[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [hasKeys, setHasKeys] = useState(false);
+  const [tempKeys, setTempKeys] = useState({ assembly: '', openrouter: '' });
+  
+  const [aiMode, setAiMode] = useState<'Turbo' | 'Genius'>('Turbo');
+  const [persona, setPersona] = useState<'Technical' | 'SystemDesign' | 'Behavioral'>('Technical');
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [currentAnswer, setCurrentAnswer] = useState('');
+  
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const answerEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const api = (window as any).auraApi;
+
     // Listen for transcripts from main process
-    (window as any).auraApi.onTranscript((data: { text: string, isFinal: boolean }) => {
+    api.onTranscript((data: { text: string, isFinal: boolean }) => {
       if (data.isFinal) {
-        setTranscript(prev => [...prev.slice(-15), data.text]); // Keep last 15 lines
-      } else {
-        // Handle interim results (optional: show in a separate "live" line)
+        setTranscript(prev => [...prev.slice(-10), data.text]); 
       }
     });
 
-    // Listen for initialization triggers from tray/main
-    (window as any).auraApi.onInitCapture(() => {
+    // AI Engine listeners
+    api.onAiThinking(() => {
+      setIsThinking(true);
+      setCurrentAnswer('');
+    });
+
+    api.onAiAnswerChunk((chunk: string) => {
+      setIsThinking(false);
+      setCurrentAnswer(prev => prev + chunk);
+    });
+
+    api.onAiAnswerEnd((fullAnswer: string) => {
+      setAnswers(prev => [...prev, fullAnswer]);
+      setCurrentAnswer('');
+    });
+
+    // Settings listeners
+    api.onSettings(() => setShowSettings(true));
+    api.onSettingsStatus((data: { hasKeys: boolean }) => setHasKeys(data.hasKeys));
+    api.onSettingsSaved(() => {
+      setShowSettings(false);
+      api.getSettingsStatus();
+    });
+
+    api.getSettingsStatus();
+    
+    api.onInitCapture(() => {
       handleToggleCapture();
     });
   }, []);
+
+  useEffect(() => {
+    answerEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [currentAnswer, answers]);
+
+  const toggleMode = () => {
+    const next = aiMode === 'Turbo' ? 'Genius' : 'Turbo';
+    setAiMode(next);
+    (window as any).auraApi.setAiMode(next);
+  };
+
+  const cyclePersona = () => {
+    const list: ('Technical' | 'SystemDesign' | 'Behavioral')[] = ['Technical', 'SystemDesign', 'Behavioral'];
+    const idx = list.indexOf(persona);
+    const next = list[(idx + 1) % list.length];
+    setPersona(next);
+    (window as any).auraApi.setAiPersona(next);
+  };
+
+  const handleCapture = () => {
+    if (!hasKeys) {
+      setShowSettings(true);
+      return;
+    }
+    (window as any).auraApi.captureScreen();
+  };
+
+  const handleSaveSettings = () => {
+    (window as any).auraApi.saveSettings(tempKeys);
+  };
 
   const handleToggleCapture = async () => {
     if (isCapturing) {
@@ -81,39 +149,110 @@ const App: React.FC = () => {
   return (
     <div className="aura-container">
       <header className="header">
-        <h1 className="title">Aura</h1>
+        <div className="title-group">
+          <h1 className="title">Aura</h1>
+          <span className="persona-badge" onClick={cyclePersona}>
+            {persona}
+          </span>
+        </div>
         <div className="controls">
           <button 
-            className="control-btn" 
-            onClick={handleToggleCapture}
-            style={{ color: isCapturing ? 'var(--accent-cyan)' : 'white' }}
+            className={`mode-btn ${aiMode.toLowerCase()}`} 
+            onClick={toggleMode}
+            title={`Switch to ${aiMode === 'Turbo' ? 'Genius (Claude)' : 'Turbo (Gemma)'}`}
           >
-            {isCapturing ? '● Stop' : 'Ready'}
+            {aiMode === 'Turbo' ? <Zap size={14} /> : <Brain size={14} />}
+            {aiMode}
+          </button>
+          <button 
+            className="control-btn" 
+            onClick={handleCapture}
+            title="Vision: Analyze Screen Content"
+            style={{ color: !hasKeys ? 'var(--text-secondary)' : 'white' }}
+          >
+            <Eye size={16} />
+          </button>
+          <button 
+            className="control-btn" 
+            onClick={() => setShowSettings(!showSettings)}
+            title="Settings"
+          >
+            <Settings size={16} />
           </button>
           <button className="control-btn" onClick={handleClose}>×</button>
         </div>
       </header>
 
       <main className="content">
-        <div className="transcript-area">
-          {transcript.length === 0 && <p className="text-secondary">Waiting for audio...</p>}
-          {transcript.map((line, i) => (
-            <p key={i} style={{ marginBottom: '8px', animation: 'fadeIn 0.5s' }}>{line}</p>
-          ))}
-        </div>
+        {showSettings && (
+          <div className="settings-overlay">
+            <h3 style={{color: 'var(--accent-cyan)', marginBottom: '16px'}}>Configuration</h3>
+            <div className="input-group">
+              <label>AssemblyAI API Key</label>
+              <input 
+                type="password" 
+                placeholder="Paste key here..."
+                value={tempKeys.assembly}
+                onChange={(e) => setTempKeys({...tempKeys, assembly: e.target.value})}
+              />
+            </div>
+            <div className="input-group">
+              <label>OpenRouter API Key</label>
+              <input 
+                type="password" 
+                placeholder="Paste key here..."
+                value={tempKeys.openrouter}
+                onChange={(e) => setTempKeys({...tempKeys, openrouter: e.target.value})}
+              />
+            </div>
+            <button className="save-btn" onClick={handleSaveSettings}>Save & Encrypt</button>
+            <p className="hint">Keys are encrypted using Windows SafeStorage.</p>
+          </div>
+        )}
 
-        {/* Placeholder for AI Answers which will come in Phase 3 */}
-        <div className="answer-card" style={{ opacity: 0.5 }}>
-          <h3 style={{fontSize: '0.8rem', color: 'var(--accent-violet)', marginBottom: '4px'}}>
-            Aura AI
-          </h3>
-          <p style={{fontSize: '0.9rem'}}>Phase 3: Intelligence Engine will populate this area.</p>
-        </div>
+        {!showSettings && (
+          <>
+            <div className="transcript-area">
+              {transcript.length === 0 && !isCapturing && <p className="text-secondary">Ready for interview...</p>}
+              {transcript.map((line, i) => (
+                <p key={i} className="transcript-line">{line}</p>
+              ))}
+            </div>
+
+            <div className="answers-container">
+              {answers.map((ans, i) => (
+                <div key={i} className="answer-card">
+                  <ReactMarkdown>{ans}</ReactMarkdown>
+                </div>
+              ))}
+              
+              {isThinking && (
+                <div className="answer-card thinking">
+                  <div className="pulse"></div>
+                  <span>Aura is thinking...</span>
+                </div>
+              )}
+
+              {currentAnswer && (
+                <div className="answer-card live">
+                  <ReactMarkdown>{currentAnswer}</ReactMarkdown>
+                </div>
+              )}
+              <div ref={answerEndRef} />
+            </div>
+          </>
+        )}
       </main>
 
       <footer className="status-bar">
-        <span>STT: {isCapturing ? 'Active' : 'Idle'} (AssemblyAI)</span>
-        <span>Audio: System</span>
+        <div className="status-item">
+          <Cpu size={12} />
+          <span>STT: {isCapturing ? 'Active' : 'Idle'}</span>
+        </div>
+        <div className="status-item">
+          <MessageSquare size={12} />
+          <span>LLM: {aiMode}</span>
+        </div>
       </footer>
     </div>
   );

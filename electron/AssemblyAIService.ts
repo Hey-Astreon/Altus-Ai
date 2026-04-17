@@ -17,41 +17,47 @@ export class AssemblyAIService extends EventEmitter {
 
     const url = `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.sampleRate}`;
     
-    this.ws = new WebSocket(url, {
+    const ws = new WebSocket(url, {
       headers: {
         Authorization: this.apiKey,
       },
     });
 
-    this.ws.on('open', () => {
+    this.ws = ws;
+
+    ws.on('open', () => {
       console.log('[AssemblyAI] WebSocket connected');
       this.emit('connect');
     });
 
-    this.ws.on('message', (data) => {
-      const response = JSON.parse(data.toString());
-      
-      if (response.message_type === 'SessionBegins') {
-        console.log('[AssemblyAI] Session started:', response.session_id);
-      } else if (response.message_type === 'PartialTranscript' || response.message_type === 'FinalTranscript') {
-        this.emit('transcript', {
-          text: response.text,
-          isFinal: response.message_type === 'FinalTranscript',
-          confidence: response.confidence,
-        });
-      } else if (response.error) {
-        console.error('[AssemblyAI] Error:', response.error);
-        this.emit('error', response.error);
+    ws.on('message', (data: any) => {
+      try {
+        const response = JSON.parse(data.toString());
+        
+        if (response.message_type === 'SessionBegins') {
+          console.log('[AssemblyAI] Session started:', response.session_id);
+        } else if (response.message_type === 'PartialTranscript' || response.message_type === 'FinalTranscript') {
+          this.emit('transcript', {
+            text: response.text,
+            isFinal: response.message_type === 'FinalTranscript',
+            confidence: response.confidence,
+          });
+        } else if (response.error) {
+          console.error('[AssemblyAI] Error:', response.error);
+          this.emit('error', response.error);
+        }
+      } catch (e) {
+        console.error('[AssemblyAI] Parse error:', e);
       }
     });
 
-    this.ws.on('close', (code, reason) => {
+    ws.on('close', (code: number, reason: any) => {
       console.log('[AssemblyAI] WebSocket closed:', code, reason.toString());
       this.ws = null;
       this.emit('disconnect');
     });
 
-    this.ws.on('error', (err) => {
+    ws.on('error', (err: any) => {
       console.error('[AssemblyAI] WebSocket error:', err);
       this.emit('error', err);
     });
@@ -59,11 +65,6 @@ export class AssemblyAIService extends EventEmitter {
 
   public sendAudio(chunk: Buffer) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      // AssemblyAI expects base64 encoded audio strings in a JSON object
-      // or raw binary if configured. The real-time API v2 uses JSON for metadata 
-      // but binary for audio samples is also supported in some versions.
-      // According to official docs for streaming: send { "audio_data": "base64..." }
-      
       const message = JSON.stringify({
         audio_data: chunk.toString('base64'),
       });
