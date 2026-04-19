@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Cpu, Zap, Brain, MessageSquare, Settings, Eye, Trash2, Activity, Cloud, Server, ChevronRight } from 'lucide-react';
+import { Cpu, Zap, Brain, MessageSquare, Settings, Eye, Trash2, Activity, Cloud, Server, ChevronRight, Mic, Keyboard, Layers } from 'lucide-react';
+import { MODEL_REGISTRY } from './constants/models';
 
 // Safe accessor — returns undefined when running outside Electron
 const getApi = () => (window as any).auraApi as Record<string, Function> | undefined;
@@ -24,8 +25,18 @@ const App: React.FC = () => {
   const [autoVision, setAutoVision] = useState(false);
   const [isCalibrated, setIsCalibrated] = useState(false);
   const [appOpacity, setAppOpacity] = useState(0.85);
+  const [error, setError] = useState<string | null>(null);
   const [isFlaring, setIsFlaring] = useState(false);
   const [isCapturingVision, setIsCapturingVision] = useState(false);
+
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState('default');
+  const [selectedModel, setSelectedModel] = useState('anthropic/claude-3.5-sonnet');
+  const [hotkeys, setHotkeys] = useState({
+    toggleVisibility: 'CommandOrControl+Shift+V',
+    visionCapture: 'CommandOrControl+Shift+S'
+  });
+  const [isRecordingHotkey, setIsRecordingHotkey] = useState<string | null>(null);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -58,9 +69,16 @@ const App: React.FC = () => {
       }),
 
       api.onAiAnswerEnd((fullAnswer: string) => {
+        setIsThinking(false);
         setAnswers(prev => [...prev, fullAnswer]);
         setCurrentAnswer('');
         setVisionContext(null);
+      }),
+
+      api.onAiError((msg: string) => {
+        setIsThinking(false);
+        setError(msg);
+        setTimeout(() => setError(null), 5000);
       }),
 
       api.onVisionCaptured((base64: string) => {
@@ -68,9 +86,12 @@ const App: React.FC = () => {
       }),
 
       api.onSettings(() => setShowSettings(true)),
-      api.onSettingsStatus((data: { hasKeys: boolean, opacity: number }) => {
+      api.onSettingsStatus((data: { hasKeys: boolean, opacity: number, selectedModel?: string, selectedDeviceId?: string, hotkeys?: any }) => {
         setHasKeys(data.hasKeys);
         if (data.opacity) setAppOpacity(data.opacity);
+        if (data.selectedModel) setSelectedModel(data.selectedModel);
+        if (data.selectedDeviceId) setSelectedDevice(data.selectedDeviceId);
+        if (data.hotkeys) setHotkeys(data.hotkeys);
       }),
       api.onSettingsSaved(() => {
         setShowSettings(false);
@@ -91,15 +112,75 @@ const App: React.FC = () => {
     ];
 
     api.getSettingsStatus();
+    loadAudioDevices();
+
+    // Hardware Hot-Plug Detection
+    navigator.mediaDevices.addEventListener('devicechange', loadAudioDevices);
+
+    // Initial Opacity Sync (Avoid React render cycle)
+    document.documentElement.style.setProperty('--app-opacity', appOpacity.toString());
 
     return () => {
       cleanups.forEach(fn => fn());
+      navigator.mediaDevices.removeEventListener('devicechange', loadAudioDevices);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loadAudioDevices = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setAudioDevices(devices.filter(d => d.kind === 'audioinput'));
+    } catch (e) {
+      console.error('Failed to load audio devices:', e);
+    }
+  };
+
+  const handleModelChange = (modelId: string) => {
+    setSelectedModel(modelId);
+    getApi()?.setModel(modelId);
+  };
+
+  const handleDeviceChange = (deviceId: string) => {
+    setSelectedDevice(deviceId);
+    getApi()?.setDevice(deviceId);
+  };
+
+  const recordHotkey = (type: string) => {
+    setIsRecordingHotkey(type);
+  };
+
   useEffect(() => {
-    answerEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!isRecordingHotkey) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      const keys = [];
+      if (e.ctrlKey || e.metaKey) keys.push('CommandOrControl');
+      if (e.shiftKey) keys.push('Shift');
+      if (e.altKey) keys.push('Alt');
+      
+      // Filter out modifier-only presses
+      if (!['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) {
+        keys.push(e.key.toUpperCase());
+        const hotkeyString = keys.join('+');
+        
+        getApi()?.updateHotkey(isRecordingHotkey, hotkeyString);
+        setHotkeys(prev => ({ ...prev, [isRecordingHotkey]: hotkeyString }));
+        setIsRecordingHotkey(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isRecordingHotkey]);
+
+  useEffect(() => {
+    // Optimization: Use requestAnimationFrame for smoother scrolling under load
+    const scrollTimer = requestAnimationFrame(() => {
+      answerEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    });
+    return () => cancelAnimationFrame(scrollTimer);
   }, [currentAnswer, answers]);
 
   const toggleMode = () => {
@@ -135,6 +216,16 @@ const App: React.FC = () => {
     setVisionContext(null);
   };
 
+  const handleSaveSettings = () => {
+    if (!tempKeys.assembly || !tempKeys.openrouter) {
+      alert('Please provide both API keys.');
+      return;
+    }
+    getApi()?.saveSettings(tempKeys);
+    getApi()?.setModel(selectedModel);
+    getApi()?.setDevice(selectedDevice);
+  };
+
   const handleCapture = () => {
     if (!IS_ELECTRON) return;
     if (!hasKeys) {
@@ -144,13 +235,12 @@ const App: React.FC = () => {
     getApi()?.captureScreen();
   };
 
-  const handleSaveSettings = () => {
-    getApi()?.saveSettings(tempKeys);
-  };
 
   const handleOpacityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setAppOpacity(val);
+    // Hardening: Direct DOM injection skips the heavy React reconciliation for the whole window
+    document.documentElement.style.setProperty('--app-opacity', val.toString());
     getApi()?.setOpacity(val);
   };
 
@@ -183,16 +273,18 @@ const App: React.FC = () => {
       return;
     }
     try {
-      // Trigger the stealth capture in Main process first (setDisplayMediaRequestHandler)
-      getApi()?.startAudioCapture();
-
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true, // Required for getDisplayMedia, but we'll ignore it
-        audio: true
+      // Create audio context and request mic stream
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: 16000,
       });
 
+      const constraints: MediaStreamConstraints = {
+        audio: selectedDevice === 'default' ? true : { deviceId: { exact: selectedDevice } }
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
       streamRef.current = stream;
-      audioContextRef.current = new AudioContext({ sampleRate: 16000 });
       
       const source = audioContextRef.current.createMediaStreamSource(stream);
       const processor = audioContextRef.current.createScriptProcessor(4096, 1, 1);
@@ -232,12 +324,17 @@ const App: React.FC = () => {
       className={`app-wrapper ${isGhostMode ? 'ghost-mode' : ''} ${isFlaring ? 'flare-pulse' : ''}`}
       style={{ '--app-opacity': appOpacity } as React.CSSProperties}
     >
+      {error && (
+        <div className="error-banner">
+          ⚠️ {error}
+        </div>
+      )}
       {isCapturing && !isCalibrated && !isGhostMode && (
         <div className="calibration-toast">
           🎙️ Say "Hello" to calibrate your voice filter...
         </div>
       )}
-      <header className="ribbon-container">
+      <header className={`ribbon-container ${(isCapturingVision || autoVision) ? 'vision-active' : ''}`}>
         <div className="drag-handle"></div>
         <div className="title-group">
           <h1 className="title">Altus AI</h1>
@@ -340,6 +437,70 @@ const App: React.FC = () => {
             </div>
 
             <button className="save-btn" onClick={handleSaveSettings}>Save & Encrypt</button>
+            
+            <div className="settings-divider"></div>
+
+            {/* COMMAND CENTER: ADVANCED HARDWARE & AI */}
+            <div className="advanced-settings">
+              <div className="input-group">
+                <label><Mic size={12}/> Audio Hardware</label>
+                <select 
+                  className="obsidian-select"
+                  value={selectedDevice}
+                  onChange={(e) => handleDeviceChange(e.target.value)}
+                >
+                  <option value="default">Default System Audio</option>
+                  {audioDevices.map(d => (
+                    <option key={d.deviceId} value={d.deviceId}>{d.label || 'Unknown Microphone'}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label><Layers size={12}/> Intelligence Core</label>
+                <div className="model-dash-list">
+                  {MODEL_REGISTRY.map(m => (
+                    <div 
+                      key={m.id} 
+                      className={`model-card ${selectedModel === m.id ? 'active' : ''}`}
+                      onClick={() => handleModelChange(m.id)}
+                    >
+                      <div className="model-header">
+                        <span className="model-name">{m.name}</span>
+                        <span className="model-cost">{m.cost}</span>
+                      </div>
+                      <div className="model-info">
+                        <span>{m.power}</span>
+                        <span>{m.usage}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label><Keyboard size={12}/> Global Hotkeys</label>
+                <div className="hotkey-item">
+                  <span>Vision Capture</span>
+                  <button 
+                    className={`hotkey-btn ${isRecordingHotkey === 'visionCapture' ? 'recording' : ''}`}
+                    onClick={() => recordHotkey('visionCapture')}
+                  >
+                    {isRecordingHotkey === 'visionCapture' ? '...Press Keys' : hotkeys.visionCapture.replace('CommandOrControl+', 'Ctrl+')}
+                  </button>
+                </div>
+                <div className="hotkey-item">
+                  <span>Toggle Visibility</span>
+                  <button 
+                    className={`hotkey-btn ${isRecordingHotkey === 'toggleVisibility' ? 'recording' : ''}`}
+                    onClick={() => recordHotkey('toggleVisibility')}
+                  >
+                    {isRecordingHotkey === 'toggleVisibility' ? '...Press Keys' : (hotkeys.toggleVisibility || 'Ctrl+Shift+V').replace('CommandOrControl+', 'Ctrl+')}
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <p className="hint">Configuration is secured via AES-256 System Storage.</p>
         </div>
 

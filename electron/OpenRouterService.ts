@@ -34,6 +34,7 @@ export class OpenRouterService extends EventEmitter {
   private apiKey: string;
   private currentMode: ModelMode = 'Turbo';
   private currentPersona: InterviewPersona = 'Technical';
+  private selectedModel: string = 'google/gemini-flash-1.5-8b';
   private memoryManager: MemoryManager;
   private abortController: AbortController | null = null;
 
@@ -51,6 +52,10 @@ export class OpenRouterService extends EventEmitter {
     this.currentPersona = persona;
   }
 
+  public setModel(modelId: string) {
+    this.selectedModel = modelId;
+  }
+
   public abort() {
     if (this.abortController) {
       this.abortController.abort();
@@ -59,9 +64,9 @@ export class OpenRouterService extends EventEmitter {
   }
 
   public async getAnswer(question: string, base64Image?: string) {
-    // If an image is provided, we MUST use a vision-capable model.
-    // Claude-3.5-Sonnet is significantly better at diagram/code analysis than Gemma.
-    const model = base64Image ? MODELS.Genius : MODELS[this.currentMode];
+    // If an image is provided, we prefer a vision-capable model.
+    // If the selected model isn't vision-capable, we might need to fallback to Genius for that prompt.
+    const model = this.selectedModel || (base64Image ? MODELS.Genius : MODELS[this.currentMode]);
     const systemPrompt = SYSTEM_PROMPTS[this.currentPersona];
 
     let userContent: any = question;
@@ -156,9 +161,10 @@ export class OpenRouterService extends EventEmitter {
       this.memoryManager.addInteraction({ role: 'user', content: userContent }, fullText);
       
       this.emit('answer-end', fullText);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[OpenRouter] Global error:', error);
-      this.emit('error', error);
+      const msg = error.response?.data?.error?.message || error.message || 'AI Intelligence Link severed.';
+      this.emit('error', msg);
     }
   }
 

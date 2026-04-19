@@ -93,14 +93,31 @@ function createWindow() {
 }
 
 function registerShortcuts() {
-  // Toggle Visibility: Ctrl+Shift+V
-  globalShortcut.register('CommandOrControl+Shift+V', () => {
-    if (mainWindow?.isVisible()) {
-      mainWindow.hide();
-    } else {
-      mainWindow?.show();
-    }
+  // Unregister all existing to prevent duplicates
+  globalShortcut.unregisterAll();
+
+  const hotkeys = settings.getSetting('hotkeys', {
+    toggleVisibility: 'CommandOrControl+Shift+V',
+    visionCapture: 'CommandOrControl+Shift+S'
   });
+
+  // Toggle Visibility
+  try {
+    globalShortcut.register(hotkeys.toggleVisibility, () => {
+      if (mainWindow?.isVisible()) {
+        mainWindow.hide();
+      } else {
+        mainWindow?.show();
+      }
+    });
+  } catch (e) { console.error('Failed to register toggleVisibility:', e); }
+
+  // Vision Capture
+  try {
+    globalShortcut.register(hotkeys.visionCapture, () => {
+       mainWindow?.webContents.send('capture-screen');
+    });
+  } catch (e) { console.error('Failed to register visionCapture:', e); }
 
   // Emergency Hide: Ctrl+Shift+Q
   globalShortcut.register('CommandOrControl+Shift+Q', () => {
@@ -135,6 +152,12 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('before-quit', () => {
+  // Hardening: Cleanly unbind all resources to prevent port/cache locks on restart
+  globalShortcut.unregisterAll();
+  mainWindow?.webContents.send('stop-audio-capture');
 });
 
 // Use IPC to handle common window actions from renderer
@@ -195,6 +218,10 @@ ipcMain.on('start-audio-capture', () => {
       mainWindow?.webContents.send('ai-answer-end', fullAnswer);
     });
 
+    aiService.on('error', (err) => {
+      mainWindow?.webContents.send('ai-error', err);
+    });
+
     sttService.connect();
   }
   mainWindow?.webContents.send('init-audio-capture');
@@ -250,6 +277,9 @@ ipcMain.on('set-ai-provider', (event, provider: 'Cloud' | 'Local') => {
     aiService.on('answer-end', (fullAnswer) => {
         mainWindow?.webContents.send('ai-answer-end', fullAnswer);
     });
+    aiService.on('error', (err) => {
+        mainWindow?.webContents.send('ai-error', err);
+    });
   }
 });
 
@@ -288,7 +318,13 @@ ipcMain.on('capture-screen', async () => {
 ipcMain.on('get-settings-status', (event) => {
   event.reply('settings-status', { 
     hasKeys: settings.hasKeys(),
-    opacity: settings.getSetting('globalOpacity', 0.85)
+    opacity: settings.getSetting('globalOpacity', 0.85),
+    selectedModel: settings.getSetting('selectedModel', 'anthropic/claude-3.5-sonnet'),
+    selectedDeviceId: settings.getSetting('selectedDeviceId', 'default'),
+    hotkeys: settings.getSetting('hotkeys', {
+      toggleVisibility: 'CommandOrControl+Shift+V',
+      visionCapture: 'CommandOrControl+Shift+S'
+    })
   });
 });
 
@@ -308,6 +344,27 @@ ipcMain.on('reset-calibration', () => {
 
 ipcMain.on('set-opacity', (event, opacity: number) => {
   settings.saveSetting('globalOpacity', opacity);
+});
+
+ipcMain.on('set-model', (event, modelId: string) => {
+  settings.saveSetting('selectedModel', modelId);
+  if (aiService instanceof OpenRouterService) {
+    aiService.setModel(modelId);
+  }
+});
+
+ipcMain.on('update-hotkey', (event, { type, value }) => {
+  const hotkeys = settings.getSetting('hotkeys', {
+    toggleVisibility: 'CommandOrControl+Shift+V',
+    visionCapture: 'CommandOrControl+Shift+S'
+  });
+  hotkeys[type] = value;
+  settings.saveSetting('hotkeys', hotkeys);
+  registerShortcuts(); // Re-apply immediately
+});
+
+ipcMain.on('set-device', (event, deviceId: string) => {
+  settings.saveSetting('selectedDeviceId', deviceId);
 });
 
 ipcMain.on('audio-chunk', (event, float32Data: Float32Array) => {

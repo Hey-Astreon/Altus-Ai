@@ -5,6 +5,12 @@ interface AuraSettings {
   assemblyAiKey?: string;
   openRouterKey?: string;
   globalOpacity?: number;
+  selectedModel?: string;
+  selectedDeviceId?: string;
+  hotkeys?: {
+    toggleVisibility?: string;
+    visionCapture?: string;
+  };
 }
 
 export class SettingsService {
