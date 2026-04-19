@@ -375,11 +375,13 @@ body {
   background: var(--gh-border);
   border-radius: 2px;
   -webkit-appearance: none;
+  appearance: none;
   cursor: pointer;
 }
 
 .premium-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
+  appearance: none;
   width: 14px;
   height: 14px;
   background: var(--neon-white);
