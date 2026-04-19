@@ -25,6 +25,13 @@
 
 **Altus AI** is a production-hardened, low-latency desktop instrument built for high-stakes technical environments. It combines **Real-time Audio Intelligence** with **System Vision Context** to provide silent, expert guidance during engineering interviews.
 
+### 🌐 Platform Compatibility
+| OS | Status | Stealth Hardening |
+| :--- | :--- | :--- |
+| **Windows 10/11** | 🟢 **Primary / Fully Hardened** | **Active (Phantom Bootstrap & Sentry)** |
+| **macOS** | 🟡 Supported (Universal) | Content Protection & Overlay |
+| **Linux** | ⚪ Supported (via Electron) | Standard Stealth Mode |
+
 <div align="center">
   <img src="assets/dashboard.png" width="800" alt="Altus AI Dashboard">
 </div>
