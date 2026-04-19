@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Cpu, Zap, Brain, MessageSquare, Settings, Eye, Trash2, Activity, Cloud, Server } from 'lucide-react';
+import { Cpu, Zap, Brain, MessageSquare, Settings, Eye, Trash2, Activity, Cloud, Server, ChevronRight } from 'lucide-react';
 
 // Safe accessor — returns undefined when running outside Electron
 const getApi = () => (window as any).auraApi as Record<string, Function> | undefined;
@@ -24,6 +24,7 @@ const App: React.FC = () => {
   const [autoVision, setAutoVision] = useState(false);
   const [isCalibrated, setIsCalibrated] = useState(false);
   const [appOpacity, setAppOpacity] = useState(0.85);
+  const [isFlaring, setIsFlaring] = useState(false);
   const [isCapturingVision, setIsCapturingVision] = useState(false);
   
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -153,6 +154,16 @@ const App: React.FC = () => {
     getApi()?.setOpacity(val);
   };
 
+  // Trigger High-Tech Flare when AI finishes thinking
+  const prevThinking = useRef(isThinking);
+  useEffect(() => {
+    if (prevThinking.current === true && isThinking === false) {
+      setIsFlaring(true);
+      setTimeout(() => setIsFlaring(false), 300);
+    }
+    prevThinking.current = isThinking;
+  }, [isThinking]);
+
   const handleToggleCapture = async () => {
     if (isCapturing) {
       stopCapture();
@@ -218,7 +229,7 @@ const App: React.FC = () => {
 
   return (
     <div 
-      className={`app-wrapper ${isGhostMode ? 'ghost-mode' : ''}`}
+      className={`app-wrapper ${isGhostMode ? 'ghost-mode' : ''} ${isFlaring ? 'flare-pulse' : ''}`}
       style={{ '--app-opacity': appOpacity } as React.CSSProperties}
     >
       {isCapturing && !isCalibrated && !isGhostMode && (
@@ -291,9 +302,11 @@ const App: React.FC = () => {
 
       {hasContent && (
         <main className="insight-window">
-        {showSettings && (
-          <div className="settings-overlay">
-            <h3 style={{color: 'var(--accent-cyan)', marginBottom: '16px'}}>Configuration</h3>
+        <div className={`obsidian-drawer ${showSettings ? 'open' : ''}`}>
+           <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: '16px'}}>
+              <h3 style={{color: 'var(--neon-white)', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '2px'}}>Configuration</h3>
+              <button className="control-btn" onClick={() => setShowSettings(false)}><ChevronRight size={18}/></button>
+           </div>
             <div className="input-group">
               <label>AssemblyAI API Key</label>
               <input 
@@ -328,17 +341,24 @@ const App: React.FC = () => {
 
             <button className="save-btn" onClick={handleSaveSettings}>Save & Encrypt</button>
             <p className="hint">Configuration is secured via AES-256 System Storage.</p>
-          </div>
-        )}
+        </div>
 
-        {!showSettings && (
-          <>
-            <div className="transcript-area">
-              {transcript.length === 0 && !isCapturing && <p className="text-secondary">Ready for interview...</p>}
-              {transcript.map((line, i) => (
-                <p key={i} className="transcript-line">{line}</p>
-              ))}
-            </div>
+        <div className="transcript-area">
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
+            <span style={{fontSize: '0.65rem', opacity: 0.5, textTransform: 'uppercase'}}>Live Stream</span>
+            {isCapturing && (
+              <div className="voice-visualizer">
+                <div className="voice-bar"></div>
+                <div className="voice-bar"></div>
+                <div className="voice-bar"></div>
+              </div>
+            )}
+          </div>
+          {transcript.length === 0 && !isCapturing && <p style={{opacity: 0.4}}>Ready for interview...</p>}
+          {transcript.map((line, i) => (
+            <p key={i} className="transcript-line">{line}</p>
+          ))}
+        </div>
 
             <div className="answers-container">
               {answers.map((ans, i) => (
@@ -367,10 +387,7 @@ const App: React.FC = () => {
               )}
               <div ref={answerEndRef} />
             </div>
-          </>
-        )}
 
-        {!showSettings && (
           <footer className="status-bar">
             <div className={`status-item ${isCapturing ? 'active' : ''}`}>
               <Cpu size={12} />
@@ -385,7 +402,6 @@ const App: React.FC = () => {
               <span>LLM: {aiMode}</span>
             </div>
           </footer>
-        )}
       </main>
       )}
     </div>
