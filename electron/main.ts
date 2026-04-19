@@ -2,6 +2,7 @@ import { app, BrowserWindow, globalShortcut, Tray, Menu, ipcMain, screen, sessio
 import path from 'path';
 import { AssemblyAIService } from './AssemblyAIService';
 import { OpenRouterService, ModelMode, InterviewPersona } from './OpenRouterService';
+import { OllamaService } from './OllamaService';
 import { QuestionDetector } from './QuestionDetector';
 import { VisionService } from './VisionService';
 import { SettingsService } from './SettingsService';
@@ -11,13 +12,16 @@ const isDev = !app.isPackaged;
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let sttService: AssemblyAIService | null = null;
-let aiService: OpenRouterService | null = null;
+let aiService: OpenRouterService | OllamaService | null = null;
 let settings: SettingsService = new SettingsService();
 let visionService: VisionService = new VisionService();
 let detector: QuestionDetector = new QuestionDetector();
-let visionInterval: NodeJS.Timeout | null = null;
+
+let currentProvider: 'Cloud' | 'Local' = 'Cloud';
+let currentMode: ModelMode = 'Turbo';
 let currentPersona: InterviewPersona = 'Technical';
 let isAutoVisionEnabled: boolean = false;
+let visionInterval: NodeJS.Timeout | null = null;
 
 
 function createTray() {
@@ -52,9 +56,9 @@ function createWindow() {
   const { width, height } = primaryDisplay.workAreaSize;
 
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 600,
-    x: width - 420,
+    width: 800,
+    height: 800,
+    x: width - 820,
     y: 100,
     frame: false,
     transparent: true,
@@ -99,6 +103,11 @@ function registerShortcuts() {
   // Emergency Hide: Ctrl+Shift+Q
   globalShortcut.register('CommandOrControl+Shift+Q', () => {
     app.quit();
+  });
+
+  // Ghost Mode Toggle: Ctrl+Shift+G
+  globalShortcut.register('CommandOrControl+Shift+G', () => {
+    mainWindow?.webContents.send('toggle-ghost-mode');
   });
 }
 
@@ -145,7 +154,17 @@ ipcMain.on('start-audio-capture', () => {
 
   if (!sttService) {
     sttService = new AssemblyAIService(assemblyKey);
-    aiService = new OpenRouterService(openRouterKey);
+    
+    // Instantiate correct AI provider
+    if (currentProvider === 'Cloud') {
+      aiService = new OpenRouterService(openRouterKey);
+    } else {
+      aiService = new OllamaService();
+    }
+    
+    // Apply current settings to new service
+    aiService.setMode(currentMode);
+    aiService.setPersona(currentPersona);
 
     sttService.on('transcript', (result) => {
       mainWindow?.webContents.send('new-transcript', result);
@@ -171,6 +190,7 @@ ipcMain.on('start-audio-capture', () => {
 });
 
 ipcMain.on('set-ai-mode', (event, mode: ModelMode) => {
+  currentMode = mode;
   aiService?.setMode(mode);
 });
 
@@ -189,14 +209,45 @@ ipcMain.on('set-auto-vision', (event, enabled: boolean) => {
   }
 });
 
+// Switch Providers on the fly
+ipcMain.on('set-ai-provider', (event, provider: 'Cloud' | 'Local') => {
+  if (currentProvider === provider) return;
+  currentProvider = provider;
+  
+  if (aiService) {
+    // Teardown old events
+    aiService.removeAllListeners('answer-chunk');
+    aiService.removeAllListeners('answer-end');
+    
+    // Spin up new service
+    const openRouterKey = settings.getKey('openrouter');
+    if (provider === 'Cloud') {
+      aiService = new OpenRouterService(openRouterKey || '');
+    } else {
+      aiService = new OllamaService();
+    }
+    
+    // Restore states
+    aiService.setMode(currentMode);
+    aiService.setPersona(currentPersona);
+    
+    // Reattach listeners
+    aiService.on('answer-chunk', (chunk) => {
+        mainWindow?.webContents.send('ai-answer-chunk', chunk);
+    });
+    aiService.on('answer-end', (fullAnswer) => {
+        mainWindow?.webContents.send('ai-answer-end', fullAnswer);
+    });
+  }
+});
+
 function startAutoVisionLoop() {
   if (visionInterval) clearInterval(visionInterval);
   visionInterval = setInterval(async () => {
     if (isAutoVisionEnabled && currentPersona === 'Technical') {
       try {
         const base64Image = await visionService.captureScreen();
-        // Silent trigger for auto-vision (don't send thinking if not much changed?)
-        // Better to just send it to AI service silently
+        mainWindow?.webContents.send('vision-captured', base64Image);
         aiService?.getAnswer("Analyze the current code/diagram and update your context. Be brief if nothing changed.", base64Image);
       } catch (err) {
         console.error('Auto-Vision failed:', err);
@@ -214,8 +265,8 @@ ipcMain.on('capture-screen', async () => {
   
   try {
     const base64Image = await visionService.captureScreen();
+    mainWindow?.webContents.send('vision-captured', base64Image);
     mainWindow?.webContents.send('ai-thinking');
-    // For vision, we send a generic prompt to analyze the image
     aiService?.getAnswer('', base64Image);
   } catch (err) {
     console.error('Vision trigger failed:', err);

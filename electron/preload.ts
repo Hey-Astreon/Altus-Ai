@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('auraApi', {
 
   // AI Answer Engine
   setAiMode: (mode: 'Turbo' | 'Genius') => ipcRenderer.send('set-ai-mode', mode),
+  setAiProvider: (provider: 'Cloud' | 'Local') => ipcRenderer.send('set-ai-provider', provider),
   setAiPersona: (persona: 'Technical' | 'SystemDesign' | 'Behavioral') => ipcRenderer.send('set-ai-persona', persona),
   setAutoVision: (enabled: boolean) => ipcRenderer.send('set-auto-vision', enabled),
   
@@ -32,4 +33,6 @@ contextBridge.exposeInMainWorld('auraApi', {
   onAiThinking: (callback: () => void) => ipcRenderer.on('ai-thinking', (event) => callback()),
   onAiAnswerChunk: (callback: (chunk: string) => void) => ipcRenderer.on('ai-answer-chunk', (event, chunk) => callback(chunk)),
   onAiAnswerEnd: (callback: (fullAnswer: string) => void) => ipcRenderer.on('ai-answer-end', (event, fullAnswer) => callback(fullAnswer)),
+  onVisionCaptured: (callback: (base64: string) => void) => ipcRenderer.on('vision-captured', (event, base64) => callback(base64)),
+  onGhostModeToggle: (callback: () => void) => ipcRenderer.on('toggle-ghost-mode', (event) => callback()),
 });

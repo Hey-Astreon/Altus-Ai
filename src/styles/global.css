@@ -29,31 +29,46 @@ body {
   width: 100%;
 }
 
-.aura-container {
+.app-wrapper {
   height: 100%;
   width: 100%;
-  background: var(--bg-color);
-  backdrop-filter: var(--glass-blur);
-  border: var(--glass-border);
-  border-radius: 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-  -webkit-app-region: drag;
+  gap: 16px;
+  background: transparent;
 }
 
-.header {
+.ribbon-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  background: var(--bg-color);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: 50px;
+  padding: 12px 24px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  -webkit-app-region: drag;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.drag-handle {
+  width: 24px;
+  height: 24px;
+  background-image: radial-gradient(rgba(255,255,255,0.2) 2px, transparent 2px);
+  background-size: 6px 6px;
+  margin-right: -4px;
+  cursor: grab;
+  border-radius: 50%;
 }
 
 .title-group {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
 }
 
 .persona-badge {
@@ -138,25 +153,32 @@ body {
   color: #FF5A5A;
 }
 
-.content {
-  flex: 1;
-  overflow-y: auto;
+.insight-window {
+  background: var(--bg-color);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
   -webkit-app-region: no-drag;
+  overflow-y: auto;
+  animation: fadeIn 0.3s ease-out;
 }
 
 /* Custom Scrollbar */
-.content::-webkit-scrollbar {
+.insight-window::-webkit-scrollbar {
   width: 4px;
 }
 
-.content::-webkit-scrollbar-track {
+.insight-window::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.content::-webkit-scrollbar-thumb {
+.insight-window::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
@@ -257,6 +279,14 @@ body {
   animation: slideUp 0.3s ease-out;
 }
 
+.vision-thumbnail {
+  max-width: 120px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 242, 255, 0.3);
+  margin-bottom: 12px;
+  display: block;
+}
+
 .answer-card.live {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(0, 242, 255, 0.3);
@@ -336,4 +366,37 @@ body {
 .status-item.active span {
   opacity: 1;
   text-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
+}
+
+
+/* --- GHOST MODE OVERRIDES --- */
+.app-wrapper.ghost-mode .ribbon-container,
+.app-wrapper.ghost-mode .insight-window {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-wrapper.ghost-mode .drag-handle,
+.app-wrapper.ghost-mode .controls,
+.app-wrapper.ghost-mode .status-bar,
+.app-wrapper.ghost-mode .vision-thumbnail {
+  display: none !important;
+}
+
+.app-wrapper.ghost-mode .answer-card {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  opacity: 0.65;
+}
+
+.app-wrapper.ghost-mode .title,
+.app-wrapper.ghost-mode .persona-badge {
+  opacity: 0.2;
+}
+
+.app-wrapper.ghost-mode .transcript-area {
+  opacity: 0.4;
 }

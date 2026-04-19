@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Cpu, Zap, Brain, MessageSquare, Settings, Eye, Trash2, Activity } from 'lucide-react';
+import { Cpu, Zap, Brain, MessageSquare, Settings, Eye, Trash2, Activity, Cloud, Server } from 'lucide-react';
 
 // Safe accessor — returns undefined when running outside Electron
 const getApi = () => (window as any).auraApi as Record<string, Function> | undefined;
@@ -10,10 +10,13 @@ const App: React.FC = () => {
   const [transcript, setTranscript] = useState<string[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [visionContext, setVisionContext] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [hasKeys, setHasKeys] = useState(false);
   const [tempKeys, setTempKeys] = useState({ assembly: '', openrouter: '' });
+  const [isGhostMode, setIsGhostMode] = useState(false);
   
+  const [provider, setProvider] = useState<'Cloud' | 'Local'>('Cloud');
   const [aiMode, setAiMode] = useState<'Turbo' | 'Genius'>('Turbo');
   const [persona, setPersona] = useState<'Technical' | 'SystemDesign' | 'Behavioral'>('Technical');
   const [answers, setAnswers] = useState<string[]>([]);
@@ -53,6 +56,11 @@ const App: React.FC = () => {
     api.onAiAnswerEnd((fullAnswer: string) => {
       setAnswers(prev => [...prev, fullAnswer]);
       setCurrentAnswer('');
+      setVisionContext(null); // Clear context once answer is finalized
+    });
+
+    api.onVisionCaptured((base64: string) => {
+      setVisionContext(`data:image/png;base64,${base64}`);
     });
 
     // Settings listeners
@@ -68,6 +76,10 @@ const App: React.FC = () => {
     api.onInitCapture(() => {
       handleToggleCapture();
     });
+
+    api.onGhostModeToggle(() => {
+      setIsGhostMode(prev => !prev);
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -79,6 +91,12 @@ const App: React.FC = () => {
     const next = aiMode === 'Turbo' ? 'Genius' : 'Turbo';
     setAiMode(next);
     getApi()?.setAiMode(next);
+  };
+
+  const toggleProvider = () => {
+    const next = provider === 'Cloud' ? 'Local' : 'Cloud';
+    setProvider(next);
+    getApi()?.setAiProvider(next);
   };
 
   const cyclePersona = () => {
@@ -99,6 +117,7 @@ const App: React.FC = () => {
     setTranscript([]);
     setAnswers([]);
     setCurrentAnswer('');
+    setVisionContext(null);
   };
 
   const handleCapture = () => {
@@ -174,9 +193,12 @@ const App: React.FC = () => {
     getApi()?.closeApp();
   };
 
+  const hasContent = showSettings || transcript.length > 0 || answers.length > 0 || currentAnswer || isThinking || isCapturing || autoVision;
+
   return (
-    <div className="aura-container">
-      <header className="header">
+    <div className={`app-wrapper ${isGhostMode ? 'ghost-mode' : ''}`}>
+      <header className="ribbon-container">
+        <div className="drag-handle"></div>
         <div className="title-group">
           <h1 className="title">Aura</h1>
           <span className="persona-badge" onClick={cyclePersona}>
@@ -185,9 +207,16 @@ const App: React.FC = () => {
         </div>
         <div className="controls">
           <button 
+            className="control-btn" 
+            onClick={toggleProvider}
+            title={`Provider: ${provider} Mode`}
+          >
+            {provider === 'Cloud' ? <Cloud size={14} color="var(--accent-cyan)" /> : <Server size={14} color="var(--accent-violet)" />}
+          </button>
+          <button 
             className={`mode-btn ${aiMode.toLowerCase()}`} 
             onClick={toggleMode}
-            title={`Switch to ${aiMode === 'Turbo' ? 'Genius (Claude)' : 'Turbo (Gemma)'}`}
+            title={`Switch to ${aiMode === 'Turbo' ? 'Genius' : 'Turbo'}`}
           >
             {aiMode === 'Turbo' ? <Zap size={14} /> : <Brain size={14} />}
             {aiMode}
@@ -224,7 +253,8 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <main className="content">
+      {hasContent && (
+        <main className="insight-window">
         {showSettings && (
           <div className="settings-overlay">
             <h3 style={{color: 'var(--accent-cyan)', marginBottom: '16px'}}>Configuration</h3>
@@ -271,11 +301,17 @@ const App: React.FC = () => {
                 <div className="answer-card thinking">
                   <div className="pulse"></div>
                   <span>Aura is thinking...</span>
+                  {visionContext && (
+                    <img src={visionContext} alt="Vision Context" className="vision-thumbnail" />
+                  )}
                 </div>
               )}
 
               {currentAnswer && (
                 <div className="answer-card live">
+                  {visionContext && (
+                    <img src={visionContext} alt="Vision Context" className="vision-thumbnail" />
+                  )}
                   <ReactMarkdown>{currentAnswer}</ReactMarkdown>
                 </div>
               )}
@@ -283,22 +319,25 @@ const App: React.FC = () => {
             </div>
           </>
         )}
-      </main>
 
-      <footer className="status-bar">
-        <div className={`status-item ${isCapturing ? 'active' : ''}`}>
-          <Cpu size={12} />
-          <span>STT: {isCapturing ? 'Listening' : 'Idle'}</span>
-        </div>
-        <div className={`status-item ${autoVision ? 'active' : ''}`}>
-          <Activity size={12} />
-          <span>Auto-Vision: {autoVision ? 'Linked' : 'Off'}</span>
-        </div>
-        <div className="status-item active">
-          <MessageSquare size={12} />
-          <span>LLM: {aiMode}</span>
-        </div>
-      </footer>
+        {!showSettings && (
+          <footer className="status-bar">
+            <div className={`status-item ${isCapturing ? 'active' : ''}`}>
+              <Cpu size={12} />
+              <span>STT: {isCapturing ? 'Listening' : 'Idle'}</span>
+            </div>
+            <div className={`status-item ${autoVision ? 'active' : ''}`}>
+              <Activity size={12} />
+              <span>Auto-Vision: {autoVision ? 'Linked' : 'Off'}</span>
+            </div>
+            <div className="status-item active">
+              <MessageSquare size={12} />
+              <span>LLM: {aiMode}</span>
+            </div>
+          </footer>
+        )}
+      </main>
+      )}
     </div>
   );
 };
