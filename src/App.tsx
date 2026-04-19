@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Cpu, Zap, Brain, MessageSquare, Settings, Eye, Camera, Maximize } from 'lucide-react';
+import { Cpu, Zap, Brain, MessageSquare, Settings, Eye, Trash2, Activity } from 'lucide-react';
+
+// Safe accessor — returns undefined when running outside Electron
+const getApi = () => (window as any).auraApi as Record<string, Function> | undefined;
+const IS_ELECTRON = typeof (window as any).auraApi !== 'undefined';
 
 const App: React.FC = () => {
   const [transcript, setTranscript] = useState<string[]>([]);
@@ -14,18 +18,24 @@ const App: React.FC = () => {
   const [persona, setPersona] = useState<'Technical' | 'SystemDesign' | 'Behavioral'>('Technical');
   const [answers, setAnswers] = useState<string[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState('');
+  const [autoVision, setAutoVision] = useState(false);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const answerEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const api = (window as any).auraApi;
+    const api = getApi();
+
+    if (!api) {
+      console.warn('[Aura] Running in browser preview mode — Electron IPC not available.');
+      return;
+    }
 
     // Listen for transcripts from main process
     api.onTranscript((data: { text: string, isFinal: boolean }) => {
       if (data.isFinal) {
-        setTranscript(prev => [...prev.slice(-10), data.text]); 
+        setTranscript(prev => [...prev.slice(-10), data.text]);
       }
     });
 
@@ -54,10 +64,11 @@ const App: React.FC = () => {
     });
 
     api.getSettingsStatus();
-    
+
     api.onInitCapture(() => {
       handleToggleCapture();
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -67,7 +78,7 @@ const App: React.FC = () => {
   const toggleMode = () => {
     const next = aiMode === 'Turbo' ? 'Genius' : 'Turbo';
     setAiMode(next);
-    (window as any).auraApi.setAiMode(next);
+    getApi()?.setAiMode(next);
   };
 
   const cyclePersona = () => {
@@ -75,19 +86,32 @@ const App: React.FC = () => {
     const idx = list.indexOf(persona);
     const next = list[(idx + 1) % list.length];
     setPersona(next);
-    (window as any).auraApi.setAiPersona(next);
+    getApi()?.setAiPersona(next);
+  };
+
+  const toggleAutoVision = () => {
+    const next = !autoVision;
+    setAutoVision(next);
+    getApi()?.setAutoVision(next);
+  };
+
+  const clearAll = () => {
+    setTranscript([]);
+    setAnswers([]);
+    setCurrentAnswer('');
   };
 
   const handleCapture = () => {
+    if (!IS_ELECTRON) return;
     if (!hasKeys) {
       setShowSettings(true);
       return;
     }
-    (window as any).auraApi.captureScreen();
+    getApi()?.captureScreen();
   };
 
   const handleSaveSettings = () => {
-    (window as any).auraApi.saveSettings(tempKeys);
+    getApi()?.saveSettings(tempKeys);
   };
 
   const handleToggleCapture = async () => {
@@ -99,9 +123,13 @@ const App: React.FC = () => {
   };
 
   const startCapture = async () => {
+    if (!IS_ELECTRON) {
+      console.warn('[Aura] Audio capture requires Electron');
+      return;
+    }
     try {
       // Trigger the stealth capture in Main process first (setDisplayMediaRequestHandler)
-      (window as any).auraApi.startAudioCapture();
+      getApi()?.startAudioCapture();
 
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: true, // Required for getDisplayMedia, but we'll ignore it
@@ -124,26 +152,26 @@ const App: React.FC = () => {
         for (let i = 0; i < inputData.length; i++) {
           pcmData[i] = Math.max(-1, Math.min(1, inputData[i])) * 0x7FFF;
         }
-        (window as any).auraApi.sendAudioChunk(new Uint8Array(pcmData.buffer));
+        getApi()?.sendAudioChunk(new Uint8Array(pcmData.buffer));
       };
 
       setIsCapturing(true);
-      console.log('Audio capture started');
+      console.log('[Aura] Audio capture started');
     } catch (err) {
-      console.error('Failed to start capture:', err);
+      console.error('[Aura] Failed to start capture:', err);
     }
   };
 
   const stopCapture = () => {
     streamRef.current?.getTracks().forEach(track => track.stop());
     audioContextRef.current?.close();
-    (window as any).auraApi.stopAudioCapture();
+    getApi()?.stopAudioCapture();
     setIsCapturing(false);
-    console.log('Audio capture stopped');
+    console.log('[Aura] Audio capture stopped');
   };
 
   const handleClose = () => {
-    (window as any).auraApi.closeApp();
+    getApi()?.closeApp();
   };
 
   return (
@@ -165,12 +193,25 @@ const App: React.FC = () => {
             {aiMode}
           </button>
           <button 
+            className={`control-btn ${autoVision ? 'active' : ''}`} 
+            onClick={toggleAutoVision}
+            title="Auto-Vision: Proactively sync screen context"
+          >
+            <Activity size={16} color={autoVision ? 'var(--accent-cyan)' : 'white'} />
+          </button>
+          <button 
             className="control-btn" 
             onClick={handleCapture}
-            title="Vision: Analyze Screen Content"
-            style={{ color: !hasKeys ? 'var(--text-secondary)' : 'white' }}
+            title="Vision: Manual Screen Capture"
           >
             <Eye size={16} />
+          </button>
+          <button 
+            className="control-btn" 
+            onClick={clearAll}
+            title="Clear History"
+          >
+            <Trash2 size={16} />
           </button>
           <button 
             className="control-btn" 
@@ -179,7 +220,7 @@ const App: React.FC = () => {
           >
             <Settings size={16} />
           </button>
-          <button className="control-btn" onClick={handleClose}>×</button>
+          <button className="control-btn close" onClick={handleClose}>×</button>
         </div>
       </header>
 
@@ -245,11 +286,15 @@ const App: React.FC = () => {
       </main>
 
       <footer className="status-bar">
-        <div className="status-item">
+        <div className={`status-item ${isCapturing ? 'active' : ''}`}>
           <Cpu size={12} />
-          <span>STT: {isCapturing ? 'Active' : 'Idle'}</span>
+          <span>STT: {isCapturing ? 'Listening' : 'Idle'}</span>
         </div>
-        <div className="status-item">
+        <div className={`status-item ${autoVision ? 'active' : ''}`}>
+          <Activity size={12} />
+          <span>Auto-Vision: {autoVision ? 'Linked' : 'Off'}</span>
+        </div>
+        <div className="status-item active">
           <MessageSquare size={12} />
           <span>LLM: {aiMode}</span>
         </div>

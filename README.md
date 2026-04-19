@@ -1,108 +1,140 @@
-# Aura — Stealth AI Interview Assistant 🕵️‍♂️✨
+<div align="center">
 
-Aura is a high-performance, undetectable Windows desktop application designed to provide real-time AI assistance during online interviews. It uses advanced stealth techniques to remain invisible to screen-sharing and proctoring software while providing you with instant, expert-level answers.
+# 🕵️‍♂️ Aura (Altus-AI) — Stealth Interview Assistant
 
----
+<img src="https://readme-typing-svg.demolab.com?font=Outfit&size=24&duration=3000&pause=1000&color=00F2FF&center=true&vCenter=true&width=600&lines=The+Silent+Partner+for+Senior+Interviews;Real-time+Transcription+%26+Deep+Reasoning;100%+Stealth+and+Undetectable" alt="Typing SVG" />
 
-## 🚀 Overview
-
-Aura acts as your "silent partner" during an interview. It captures the interviewer's voice through system audio loopback, transcribes it in real-time using AssemblyAI, and generates answers using cutting-edge LLMs (Claude 3.5 Sonnet and Gemma 4) via OpenRouter.
-
-### Key Highlights:
-*   **Total Stealth**: Specifically built to bypass OBS, Zoom, Teams, and standard proctoring tools.
-*   **Dual-Brain Intelligence**: Toggle between a high-speed "Turbo" mode for general talk and a "Genius" mode for complex logic.
-*   **Vision-Enabled**: Analyze technical diagrams or code snippets shown on the interviewer's screen with one click.
-*   **Encrypted Security**: Your API keys are locked using the Windows SafeStorage API.
+[![MIT License](https://img.shields.io/badge/License-MIT-00F2FF.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/Version-1.0.0-VIOLET.svg?style=for-the-badge)](https://github.com/Hey-Astreon/Altus-Ai)
+[![Platform](https://img.shields.io/badge/Platform-Windows-blue.svg?style=for-the-badge)](https://github.com/Hey-Astreon/Altus-Ai)
+[![Status](https://img.shields.io/badge/Status-Production--Ready-green.svg?style=for-the-badge)](https://github.com/Hey-Astreon/Altus-Ai)
 
 ---
 
-## 🛠 Tech Stack
-
-*   **Runtime**: [Electron](https://www.electronjs.org/) (Main process & Preload bridge)
-*   **Frontend**: [React](https://react.dev/) + [Vite](https://vitejs.dev/)
-*   **Styling**: Vanilla CSS (Obsidian Neon Glassmorphism)
-*   **Audio Capture**: Hidden Renderer + MediaDevices (Loopback)
-*   **Speech-to-Text**: [AssemblyAI](https://www.assemblyai.com/) (Real-time WebSockets)
-*   **LLM Gateway**: [OpenRouter](https://openrouter.ai/) (Gemini 1.5 Flash & Claude 3.5 Sonnet)
-*   **Security**: Electron `safeStorage` + `electron-store`
+### **Built With a Modern Stack**
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=react,electron,vite,typescript,css,html&theme=dark" />
+</p>
 
 ---
 
-## 🌟 Features
+</div>
 
-### 1. **Obsidian Stealth UI**
-The application window is frameless, transparent, and excluded from OS-level screen capture. It sits on top of your windows but remains invisible to everyone but you.
+## 🚀 The Aura Advantage
 
-### 2. **Real-time Transcription**
-Heats and transcribes the interviewer's voice with <500ms latency. Supports an "English-only" lock for maximum speed and accuracy during technical sessions.
+Aura is a high-performance, undetectable Windows desktop application designed to provide **real-time AI assistance** during online interviews. It sits as a bridge between world-class intelligence and your active window.
 
-### 3. **AI Question Detection**
-Aura proactively identifies when a question has been asked and starts "thinking" automatically, showing you a live-streaming answer character-by-character.
-
-### 4. **Vision Analysis**
-Click the **Eye Icon** to capture a silent screenshot of the interviewer's screen. Aura will decode the diagram, flowchart, or code snippet and explain it to you.
-
-### 5. **Interview Personas**
-Switch between **Technical**, **System Design**, and **Behavioral** modes to change the AI's "expertise" and tone instantly.
+| Feature | The Aura Way | Traditional Methods |
+| :--- | :--- | :--- |
+| **Stealth** | **OS-Level Protection** (Invisible to Zoom/Teams) | Easily detected via screenshare |
+| **Input** | **System Audio Loopback** (Direct capture) | Poor mic capture or manual typing |
+| **Recall** | **Proactive Auto-Vision** (AI sees your code) | You have to copy-paste code snippets |
+| **Logic** | **Dual-Engine** (Turbo vs Deep Genius) | Single fixed-latency model |
 
 ---
 
-## 🏁 Getting Started
+## 📸 Visual Showcase
 
-### Prerequisites
-*   Node.js (v18 or higher)
-*   npm or yarn
-*   An **AssemblyAI API Key**
-*   An **OpenRouter API Key**
-
-### Installation
-
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/Silenttears-cloud/Aura-AI-Desktop-Application.git
-    cd aura
-    ```
-
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
-
-### Running the App
-
-1.  **Start the development environment**:
-    ```bash
-    npm run start
-    ```
-    *This will launch the Vite dev server and the Electron shell concurrently.*
-
-2.  **Configuration**:
-    *   Click the **Settings Gear** ⚙️ in the app header.
-    *   Paste your API keys. They will be encrypted and saved locally.
+![Aura App Mockup](./assets/aura_app_mockup.png)
 
 ---
 
-## 🕹 How to Use
+## 🕹 Interface & Feature Map
 
-*   **Start Listening**: Click the **Start** button in the header. Aura will start transcribing the system audio.
-*   **Analyze Screen**: Click the **Eye Icon** 👁️ to capture the current screen content for AI analysis.
-*   **Panic Button (Genius Mode)**: Toggle from **Turbo** to **Genius** mode if the interviewer asks an extremely difficult reasoning question.
-*   **Toggle Overlay**: Use `Ctrl + Shift + V` to quickly show/hide the application.
-*   **Emergency Quit**: Use `Ctrl + Shift + Q` to instantly kill the application.
+### **The Command Center**
+
+````carousel
+```markdown
+### 👤 Persona Badge
+Cycles between **Technical**, **System Design**, and **Behavioral** modes. 
+Changing this adjusts the AI's internal logic and response tone.
+```
+<!-- slide -->
+```markdown
+### ⚡ Turbo / 🧠 Genius Toggle
+- **Turbo**: Lightning speed (Gemini 1.5 Flash). Best for general conversation.
+- **Genius**: Deep reasoning (Claude 3.5 Sonnet). Best for complex algorithmic logic.
+```
+<!-- slide -->
+```markdown
+### 〰️ Auto-Vision Toggle
+Forces Aura to proactively "look" at your screen every 15 seconds. 
+Essential for coding rounds where the problem is evolving on screen.
+```
+````
+
+### **Detailed Button Guide**
+
+| Icon | Name | Description |
+| :--- | :--- | :--- |
+| **`TECHNICAL`** | **Persona** | Click to cycle expertise: Technical → System Design → Behavioral. |
+| **`Turbo/Genius`**| **Model** | Switches between the high-speed engine and the high-reasoning engine. |
+| **`〰️`** | **Auto-Sync** | When active (cyan glow), Aura automatically syncs with your screen context. |
+| **`👁️`** | **Manual Eye** | Performs an instant, silent capture of your primary screen for AI analysis. |
+| **`🗑️`** | **Clear All** | Wipes the current transcript and AI history. |
+| **`⚙️`** | **Settings** | Opens the configuration panel for your API keys. |
+| **`×`** | **Instant Quit** | Immediately terminates the application. |
 
 ---
 
-## 🔮 Future Roadmap & Enhancements
+## 📐 System Architecture
 
-To take Aura to the next level, I recommend implementing the following:
+![Aura Architecture](./assets/aura_architecture.png)
 
-1.  **Auto-Vision Sync**: A "Low Frequency" auto-screenshot mode that keeps an eye on the code being written without manual clicks.
-2.  **Multilingual Support**: Add auto-detection for interviews in non-English languages.
-3.  **Local LLM Fallback**: Implement `Ollama` or `LM Studio` integration for 100% offline intelligence.
-4.  **Audio Noise Cancellation**: Add a filter to the audio worker to handle interviewers with low-quality microphones or background noise.
-5.  **Mock Interview Mode**: A training mode where Aura asks you questions and evaluates your responses based on real-world transcriptions.
+```mermaid
+sequenceDiagram
+    participant I as Interviewer
+    participant S as System Audio
+    participant TR as AssemblyAI (STT)
+    participant A as Aura Core
+    participant AI as LLM (Claude/Gemini)
+    participant U as UI (Glassmorphism)
+
+    I->>S: Asks Question
+    S->>TR: Audio Stream (PCM)
+    TR->>A: Live Transcript
+    A->>AI: Trigger Contextual Reasoning
+    Note over A,AI: Includes Screen Vision Data
+    AI-->>U: Streaming Answer
+```
 
 ---
 
-## 📄 License
-This project is for educational and personal use only. Please use responsibly and in accordance with your local interview ethical guidelines.
+## 🛠 Advanced Features
+
+### **1. Total Stealth Mode**
+![Stealth Concept](./assets/aura_stealth_concept.png)
+The window uses a low-level OS hook (`SetContentProtection`) which prevents it from being captured by Zoom, Teams, OBS, or Proctoring software. **Only you see the overlay; they see a clean desktop.**
+
+### **2. Security & Encryption**
+Aura utilizes the **Windows SafeStorage API** to encrypt your sensitive API keys. They are never stored in plain text and never leave your local machine.
+
+---
+
+## ⌨️ Global Hotkeys
+
+*   **`Ctrl + Shift + V`**: Toggle Visibility (instantly show/hide the app).
+*   **`Ctrl + Shift + Q`**: Emergency Panic Kill (instantly closes everything).
+
+---
+
+## 🏁 Installation & Setup
+
+### **For Developers**
+1. **Clone**: `git clone https://github.com/Hey-Astreon/Altus-Ai.git`
+2. **Install**: `npm install`
+3. **Launch**: Double-click `Launch Aura.bat`
+
+### **For Users (.exe)**
+1. Navigate to the `release/` folder.
+2. Run **`Aura-Setup-1.0.0.exe`**.
+3. Launch "Aura AI" from your Desktop.
+
+---
+
+## ⚖️ Responsible AI Usage
+> [!CAUTION]
+> Aura is intended for **educational and preparation purposes only**. Users must comply with the ethical guidelines of their prospective employers and local regulations. The developers are not responsible for any misuse.
+
+---
+<p align="center">Made with ❤️ for the Engineering Community</p>

@@ -19,12 +19,19 @@
     "files": [
       "dist",
       "dist-electron",
+      "assets",
       "package.json"
     ],
     "directories": {
       "output": "release",
       "buildResources": "assets"
     },
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ],
     "win": {
       "target": [
         {
@@ -41,12 +48,16 @@
         }
       ],
       "icon": "assets/icon.png",
-      "requestedExecutionLevel": "asInvoker"
+      "requestedExecutionLevel": "asInvoker",
+      "sign": false
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Aura AI",
       "artifactName": "${productName}-Setup-${version}.${ext}"
     }
   },

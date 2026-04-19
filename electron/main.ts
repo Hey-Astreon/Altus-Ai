@@ -15,10 +15,15 @@ let aiService: OpenRouterService | null = null;
 let settings: SettingsService = new SettingsService();
 let visionService: VisionService = new VisionService();
 let detector: QuestionDetector = new QuestionDetector();
+let visionInterval: NodeJS.Timeout | null = null;
+let currentPersona: InterviewPersona = 'Technical';
+let isAutoVisionEnabled: boolean = false;
 
 
 function createTray() {
-  const iconPath = path.join(__dirname, '../assets/icon.png');
+  const iconPath = isDev
+    ? path.join(__dirname, '../assets/icon.png')
+    : path.join(process.resourcesPath, 'assets/icon.png');
   tray = new Tray(iconPath);
   
   const contextMenu = Menu.buildFromTemplate([
@@ -170,8 +175,35 @@ ipcMain.on('set-ai-mode', (event, mode: ModelMode) => {
 });
 
 ipcMain.on('set-ai-persona', (event, persona: InterviewPersona) => {
+  currentPersona = persona;
   aiService?.setPersona(persona);
 });
+
+ipcMain.on('set-auto-vision', (event, enabled: boolean) => {
+  isAutoVisionEnabled = enabled;
+  if (!enabled && visionInterval) {
+    clearInterval(visionInterval);
+    visionInterval = null;
+  } else if (enabled && !visionInterval) {
+    startAutoVisionLoop();
+  }
+});
+
+function startAutoVisionLoop() {
+  if (visionInterval) clearInterval(visionInterval);
+  visionInterval = setInterval(async () => {
+    if (isAutoVisionEnabled && currentPersona === 'Technical') {
+      try {
+        const base64Image = await visionService.captureScreen();
+        // Silent trigger for auto-vision (don't send thinking if not much changed?)
+        // Better to just send it to AI service silently
+        aiService?.getAnswer("Analyze the current code/diagram and update your context. Be brief if nothing changed.", base64Image);
+      } catch (err) {
+        console.error('Auto-Vision failed:', err);
+      }
+    }
+  }, 15000); // Every 15 seconds
+}
 
 ipcMain.on('capture-screen', async () => {
   const openRouterKey = settings.getKey('openrouter');

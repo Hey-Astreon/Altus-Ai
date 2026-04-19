@@ -126,6 +126,18 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
+.control-btn.active {
+  background: rgba(0, 242, 255, 0.15);
+  border: 1px solid rgba(0, 242, 255, 0.5);
+  box-shadow: 0 0 12px rgba(0, 242, 255, 0.3);
+  color: var(--accent-cyan);
+}
+
+.control-btn.close:hover {
+  background: rgba(255, 50, 50, 0.3);
+  color: #FF5A5A;
+}
+
 .content {
   flex: 1;
   overflow-y: auto;
@@ -307,8 +319,21 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+.status-item span {
+  opacity: 0.8;
+}
+
+.status-item.active {
+  color: var(--accent-cyan);
+}
+
+.status-item.active span {
+  opacity: 1;
+  text-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
 }

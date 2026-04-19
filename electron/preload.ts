@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('auraApi', {
   // AI Answer Engine
   setAiMode: (mode: 'Turbo' | 'Genius') => ipcRenderer.send('set-ai-mode', mode),
   setAiPersona: (persona: 'Technical' | 'SystemDesign' | 'Behavioral') => ipcRenderer.send('set-ai-persona', persona),
+  setAutoVision: (enabled: boolean) => ipcRenderer.send('set-auto-vision', enabled),
   
   captureScreen: () => ipcRenderer.send('capture-screen'),
 
