@@ -22,6 +22,8 @@ const App: React.FC = () => {
   const [answers, setAnswers] = useState<string[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [autoVision, setAutoVision] = useState(false);
+  const [isCalibrated, setIsCalibrated] = useState(false);
+  const [isCapturingVision, setIsCapturingVision] = useState(false);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -76,6 +78,10 @@ const App: React.FC = () => {
 
       api.onGhostModeToggle(() => {
         setIsGhostMode(prev => !prev);
+      }),
+
+      api.onCalibrationComplete(() => {
+        setIsCalibrated(true);
       })
     ];
 
@@ -141,8 +147,13 @@ const App: React.FC = () => {
     if (isCapturing) {
       stopCapture();
     } else {
+      setIsCalibrated(false); // Reset calibration state when starting new session
       await startCapture();
     }
+  };
+
+  const handleExport = () => {
+    getApi()?.exportSession({ answers, transcript });
   };
 
   const startCapture = async () => {
@@ -175,9 +186,9 @@ const App: React.FC = () => {
       };
 
       setIsCapturing(true);
-      console.log('[Aura] Audio capture started');
+      console.log('[Altus AI] Audio capture started');
     } catch (err) {
-      console.error('[Aura] Failed to start capture:', err);
+      console.error('[Altus AI] Failed to start capture:', err);
     }
   };
 
@@ -197,10 +208,15 @@ const App: React.FC = () => {
 
   return (
     <div className={`app-wrapper ${isGhostMode ? 'ghost-mode' : ''}`}>
+      {isCapturing && !isCalibrated && !isGhostMode && (
+        <div className="calibration-toast">
+          🎙️ Say "Hello" to calibrate your voice filter...
+        </div>
+      )}
       <header className="ribbon-container">
         <div className="drag-handle"></div>
         <div className="title-group">
-          <h1 className="title">Aura</h1>
+          <h1 className="title">Altus AI</h1>
           <span className="persona-badge" onClick={cyclePersona}>
             {persona}
           </span>
@@ -241,6 +257,13 @@ const App: React.FC = () => {
             title="Clear History"
           >
             <Trash2 size={16} />
+          </button>
+          <button 
+            className="control-btn" 
+            onClick={handleExport}
+            title="Export Session (Markdown)"
+          >
+            <MessageSquare size={16} />
           </button>
           <button 
             className="control-btn" 

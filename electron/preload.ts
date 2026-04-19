@@ -24,10 +24,17 @@ contextBridge.exposeInMainWorld('auraApi', {
   // Audio Capture & STT
   startAudioCapture: () => ipcRenderer.send('start-audio-capture'),
   stopAudioCapture: () => ipcRenderer.send('stop-audio-capture'),
-  sendAudioChunk: (chunk: Float32Array) => ipcRenderer.send('audio-chunk', chunk), // Updated to raw float32 for main-thread offloading
+  sendAudioChunk: (chunk: Float32Array) => ipcRenderer.send('audio-chunk', chunk),
   
   onInitCapture: createHandler('init-audio-capture'),
   onTranscript: createHandler('new-transcript'),
+  
+  // Platinum Features: Speaker Diarization
+  resetCalibration: () => ipcRenderer.send('reset-calibration'),
+  onCalibrationComplete: createHandler('calibration-complete'),
+
+  // Platinum Features: Session Export
+  exportSession: (data: { answers: any[], transcript: any[] }) => ipcRenderer.send('export-session', data),
 
   // AI Answer Engine
   setAiMode: (mode: 'Turbo' | 'Genius') => ipcRenderer.send('set-ai-mode', mode),

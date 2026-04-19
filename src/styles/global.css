@@ -400,3 +400,30 @@ body {
 .app-wrapper.ghost-mode .transcript-area {
   opacity: 0.4;
 }
+
+
+/* --- PLATINUM UI: CALIBRATION --- */
+.calibration-toast {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 242, 255, 0.1);
+  border: 1px solid rgba(0, 242, 255, 0.3);
+  color: var(--accent-cyan);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  animation: pulse-border 2s infinite;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@keyframes pulse-border {
+  0% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 242, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0); }
+}

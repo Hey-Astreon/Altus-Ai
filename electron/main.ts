@@ -5,6 +5,7 @@ import { OpenRouterService, ModelMode, InterviewPersona } from './OpenRouterServ
 import { OllamaService } from './OllamaService';
 import { QuestionDetector } from './QuestionDetector';
 import { VisionService } from './VisionService';
+import { Exporter } from './Exporter';
 import { SettingsService } from './SettingsService';
 
 const isDev = !app.isPackaged;
@@ -16,6 +17,7 @@ let aiService: OpenRouterService | OllamaService | null = null;
 let settings: SettingsService = new SettingsService();
 let visionService: VisionService = new VisionService();
 let detector: QuestionDetector = new QuestionDetector();
+let userSpeakerId: string | null = null;
 
 let currentProvider: 'Cloud' | 'Local' = 'Cloud';
 let currentMode: ModelMode = 'Turbo';
@@ -39,7 +41,7 @@ function createTray() {
     { label: 'Quit', click: () => app.quit() }
   ]);
 
-  tray.setToolTip('Aura — AI Interview Assistant');
+  tray.setToolTip('Altus AI — Stealth AI Interview Assistant');
   tray.setContextMenu(contextMenu);
   
   tray.on('click', () => {
@@ -167,10 +169,19 @@ ipcMain.on('start-audio-capture', () => {
     aiService.setPersona(currentPersona);
 
     sttService.on('transcript', (result) => {
+      // If we are calibrating and a final transcript arrives, lock the user's Speaker ID
+      if (!userSpeakerId && result.isFinal && result.speaker) {
+        userSpeakerId = result.speaker;
+        console.log('[Altus] Calibrated User Speaker ID:', userSpeakerId);
+        mainWindow?.webContents.send('calibration-complete', userSpeakerId);
+      }
+
       mainWindow?.webContents.send('new-transcript', result);
       
-      // AUTO-DETECTION: If the transcript is final and is a question, trigger AI
-      if (result.isFinal && detector.isQuestion(result.text)) {
+      // STEALTH FILTER: Only trigger AI if it's NOT the user speaking
+      const isUserSpeaking = userSpeakerId && result.speaker === userSpeakerId;
+
+      if (!isUserSpeaking && result.isFinal && detector.isQuestion(result.text)) {
         mainWindow?.webContents.send('ai-thinking');
         aiService?.getAnswer(result.text);
       }
@@ -282,6 +293,14 @@ ipcMain.on('save-settings', (event, { assembly, openrouter }) => {
   if (assembly) settings.saveKey('assembly', assembly);
   if (openrouter) settings.saveKey('openrouter', openrouter);
   event.reply('settings-saved');
+});
+
+ipcMain.on('export-session', async (event, { answers, transcript }) => {
+  await Exporter.exportMarkdown(answers, transcript);
+});
+
+ipcMain.on('reset-calibration', () => {
+  userSpeakerId = null;
 });
 
 ipcMain.on('audio-chunk', (event, float32Data: Float32Array) => {

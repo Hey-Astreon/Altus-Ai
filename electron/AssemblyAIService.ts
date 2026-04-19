@@ -15,7 +15,7 @@ export class AssemblyAIService extends EventEmitter {
   public connect() {
     if (this.ws) return;
 
-    const url = `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.sampleRate}`;
+    const url = `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.sampleRate}&speaker_labels=true`;
     
     const ws = new WebSocket(url, {
       headers: {
@@ -41,6 +41,7 @@ export class AssemblyAIService extends EventEmitter {
             text: response.text,
             isFinal: response.message_type === 'FinalTranscript',
             confidence: response.confidence,
+            speaker: response.speaker, // ADDED: Speaker ID (e.g. A, B)
           });
         } else if (response.error) {
           console.error('[AssemblyAI] Error:', response.error);
