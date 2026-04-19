@@ -8,6 +8,15 @@
     <img src="https://img.shields.io/badge/Stealth-Hardened-black?style=for-the-badge&logo=ghost" alt="Stealth">
     <img src="https://img.shields.io/badge/Brand-Altus_AI-white?style=for-the-badge" alt="Branding">
   </p>
+
+  ### 🛠️ The Tech Stack
+  <p>
+    <img src="https://img.shields.io/badge/ELECTRON-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron">
+    <img src="https://img.shields.io/badge/REACT-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React">
+    <img src="https://img.shields.io/badge/TYPESCRIPT-007ACC?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
+    <img src="https://img.shields.io/badge/VITE-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite">
+    <img src="https://img.shields.io/badge/OPENROUTER-FF4F00?style=flat-square&logo=openai&logoColor=white" alt="OpenRouter">
+  </p>
 </div>
 
 ---
