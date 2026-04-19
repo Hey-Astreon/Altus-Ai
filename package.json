@@ -1,7 +1,7 @@
 {
-  "name": "aura",
+  "name": "altus-ai",
   "version": "1.0.0",
-  "description": "Aura — Stealth AI Interview Assistant",
+  "description": "Altus-AI — Stealth AI Interview Assistant",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
