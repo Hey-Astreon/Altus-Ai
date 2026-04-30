@@ -20,6 +20,7 @@ export class StealthService extends EventEmitter {
     'Loom.exe',           // Loom recorder
     'ScreenRecorder.exe', // Windows Screen Recorder
     'GoTo.exe',           // GoToMeeting
+    'taskmgr.exe'         // Windows Task Manager (User checking processes)
   ];
 
   constructor() {
@@ -29,8 +30,8 @@ export class StealthService extends EventEmitter {
   public start() {
     if (this.scanInterval) return;
     
-    // Poll every 10 seconds to keep overhead low
-    this.scanInterval = setInterval(() => this.scanForThreats(), 10000);
+    // Poll every 3 seconds for high-speed response (V3 Elite Spec)
+    this.scanInterval = setInterval(() => this.scanForThreats(), 3000);
     this.scanForThreats();
   }
 

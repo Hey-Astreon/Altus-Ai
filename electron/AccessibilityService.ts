@@ -64,7 +64,11 @@ export class AccessibilityService extends EventEmitter {
     const psScript = `
       Add-Type -AssemblyName UIAutomationClient
       Add-Type -AssemblyName UIAutomationTypes
-      $target = Get-Process | Where-Object { $_.ProcessName -like "*Diagnostic*" -or $_.ProcessName -like "*Mettl*" -or $_.MainWindowTitle -like "*Secure Browser*" -or $_.ProcessName -like "*Notepad*" } | Select-Object -First 1
+      $keywords = "*Diagnostic*", "*Mettl*", "*Secure Browser*", "*Proctor*", "*LockDown*", "*Safe Exam*", "*Notepad*", "*Chrome*", "*Edge*"
+      $target = Get-Process | Where-Object { 
+        $p = $_
+        $keywords | Where-Object { $p.ProcessName -like $_ -or $p.MainWindowTitle -like $_ }
+      } | Select-Object -First 1
       if ($target) {
         $element = [Windows.Automation.AutomationElement]::FromHandle($target.MainWindowHandle)
         $children = $element.FindAll([Windows.Automation.TreeScope]::Descendants, [Windows.Automation.Condition]::TrueCondition)

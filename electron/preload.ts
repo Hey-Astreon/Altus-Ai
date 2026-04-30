@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
+// SECURE GHOST BRIDGE: Minimalist, High-Speed, Synchronized
 const createHandler = (channel: string) => (callback: (...args: any[]) => void) => {
   const subscription = (_event: IpcRendererEvent, ...args: any[]) => callback(...args);
   ipcRenderer.on(channel, subscription);
@@ -8,55 +9,47 @@ const createHandler = (channel: string) => (callback: (...args: any[]) => void) 
   };
 };
 
-contextBridge.exposeInMainWorld('altusApi', {
-  hideWindow: () => ipcRenderer.send('window-hide'),
-  closeApp: () => ipcRenderer.send('window-close'),
-  setIgnoreMouseEvents: (ignore: boolean, options?: { forward: boolean }) => 
-    ipcRenderer.send('set-ignore-mouse-events', ignore, options),
-  
-  onSettings: createHandler('open-settings'),
-  
-  saveSettings: (keys: { assembly: string, openrouter: string }) => ipcRenderer.send('save-settings', keys),
-  getSettingsStatus: () => ipcRenderer.send('get-settings-status'),
-  onSettingsStatus: createHandler('settings-status'),
-  onSettingsSaved: createHandler('settings-saved'),
+contextBridge.exposeInMainWorld('api', {
+  // SYSTEM CONTROLS
+  send: (channel: string, data?: any) => {
+    const validChannels = [
+      'window-hide', 
+      'window-close', 
+      'set-opacity', 
+      'save-keys', 
+      'start-audio-capture', 
+      'stop-audio-capture', 
+      'capture-screen', 
+      'toggle-auto-vision',
+      'set-camouflage',
+      'install-update'
+    ];
+    if (validChannels.includes(channel)) {
+      ipcRenderer.send(channel, data);
+    }
+  },
 
-  // Audio Capture & STT
-  startAudioCapture: () => ipcRenderer.send('start-audio-capture'),
-  stopAudioCapture: () => ipcRenderer.send('stop-audio-capture'),
-  sendAudioChunk: (chunk: Float32Array) => ipcRenderer.send('audio-chunk', chunk),
-  getAudioDevices: () => navigator.mediaDevices.enumerateDevices(),
-  
-  onInitCapture: createHandler('init-audio-capture'),
-  onTranscript: createHandler('new-transcript'),
-  
-  // Platinum Features: Speaker Diarization
-  resetCalibration: () => ipcRenderer.send('reset-calibration'),
-  onCalibrationComplete: createHandler('calibration-complete'),
+  handle: async (channel: string, data?: any) => {
+    const validChannels = ['get-settings'];
+    if (validChannels.includes(channel)) {
+      return await ipcRenderer.invoke(channel, data);
+    }
+  },
 
-  // Platinum Features: Session Export
-  exportSession: (data: { answers: any[], transcript: any[] }) => ipcRenderer.send('export-session', data),
+  // COMPATIBILITY WRAPPERS (For App.tsx getSettings call)
+  getSettings: () => ipcRenderer.invoke('get-settings'),
 
-  // Command Center Features
-  setOpacity: (opacity: number) => ipcRenderer.send('set-opacity', opacity),
-  setModel: (modelId: string) => ipcRenderer.send('set-model', modelId),
-  setDevice: (deviceId: string) => ipcRenderer.send('set-device', deviceId),
-  updateHotkey: (type: string, value: string) => ipcRenderer.send('update-hotkey', { type, value }),
-
-  // AI Answer Engine
-  setAiMode: (mode: 'Turbo' | 'Genius') => ipcRenderer.send('set-ai-mode', mode),
-  setAiProvider: (provider: 'Cloud' | 'Local') => ipcRenderer.send('set-ai-provider', provider),
-  setAiPersona: (persona: 'Technical' | 'SystemDesign' | 'Behavioral') => ipcRenderer.send('set-ai-persona', persona),
-  setAutoVision: (enabled: boolean) => ipcRenderer.send('set-auto-vision', enabled),
-  
-  captureScreen: () => ipcRenderer.send('capture-screen'),
-
-  onAiThinking: createHandler('ai-thinking'),
+  // INTELLIGENCE EVENTS
   onAiAnswerChunk: createHandler('ai-answer-chunk'),
   onAiAnswerEnd: createHandler('ai-answer-end'),
   onAiError: createHandler('ai-error'),
-  onVisionCaptured: createHandler('vision-captured'),
-  onCamouflageStateChange: createHandler('camouflage-state-change'),
-  setCamouflage: (active: boolean) => ipcRenderer.send('set-camouflage', active),
-  onGhostModeToggle: createHandler('toggle-ghost-mode'),
+  onCaptureScreen: createHandler('capture-screen'),
+  onTranscript: createHandler('new-transcript'),
+  onUpdateAvailable: createHandler('update-available'),
+  onUpdateReady: createHandler('update-ready'),
+  
+  // CLEANUP
+  removeAllListeners: (channel: string) => {
+    ipcRenderer.removeAllListeners(channel);
+  }
 });
