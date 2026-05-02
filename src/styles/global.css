@@ -17,12 +17,11 @@ body {
   color: var(--ghost-text);
   overflow: hidden;
   height: 100vh;
-  cursor: default; /* PURGE FANCY CURSORS */
 }
 
 .app-wrapper {
   height: 100vh;
-  width: 450px; /* LOCK WIDTH FOR STABILITY */
+  width: 600px; /* HARD LOCK WIDTH */
   margin: 0 auto;
   padding: 8px;
   display: flex;
@@ -35,8 +34,8 @@ body {
 
 /* RIBBON: THE COMMAND CENTER */
 .ribbon-container {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   background: var(--ghost-bg);
   backdrop-filter: blur(40px);
@@ -45,28 +44,28 @@ body {
   padding: 0 12px;
   height: 42px;
   min-height: 42px;
+  width: 584px; /* HARD LOCK RIBBON WIDTH */
   flex-shrink: 0;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-}
-
-.drag-region {
-  -webkit-app-region: drag; /* NATIVE HARDWARE DRAG */
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
+  -webkit-app-region: drag;
 }
 
 .control-pod { 
   display: flex; 
   gap: 4px; 
   align-items: center; 
-  -webkit-app-region: no-drag; 
+  -webkit-app-region: no-drag;
 }
 
-.control-pod:last-child { justify-content: flex-end; }
-.branding-pod { display: flex; align-items: center; gap: 8px; justify-content: center; }
+.branding-pod { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  pointer-events: none;
+}
 
 .title {
   font-size: 0.65rem;
@@ -76,7 +75,6 @@ body {
   color: #fff;
   opacity: 0.9;
   user-select: none;
-  pointer-events: none;
 }
 
 .system-heartbeat {
@@ -98,12 +96,6 @@ body {
   box-shadow: 0 0 15px #fff;
 }
 
-.system-heartbeat.update-available {
-  background: #ffcc00;
-  box-shadow: 0 0 15px #ffcc00;
-  animation: heartbeat-pulse 1s infinite ease-in-out;
-}
-
 @keyframes auto-pilot-pulse {
   0%, 100% { opacity: 0.4; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.2); }
@@ -118,7 +110,6 @@ body {
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   transition: all 0.1s;
-  -webkit-app-region: no-drag;
 }
 
 .control-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
@@ -141,6 +132,7 @@ body {
   background: transparent;
   overflow: hidden;
   position: relative;
+  width: 584px;
 }
 
 .answers-container {
@@ -199,7 +191,6 @@ body {
   box-shadow: 0 20px 80px rgba(0, 0, 0, 1);
   transform: translateY(-110%);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  -webkit-app-region: no-drag;
 }
 
 .obsidian-drawer.open { transform: translateY(0); }

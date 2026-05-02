@@ -67,9 +67,29 @@ const App: React.FC = () => {
       }
     }, 50);
 
+    // ADVANCED HOLOGRAPHIC HYBRID ENGINE
+    const handleMouseTransparency = (e: MouseEvent) => {
+      const api = getApi();
+      if (!api || !api.setIgnoreMouse) return;
+
+      const target = e.target as HTMLElement;
+      // Is the mouse over the ribbon or the settings drawer?
+      // Check parent elements to ensure buttons are included
+      const isOverRibbon = !!target.closest('.ribbon-container');
+      const isOverDrawer = !!target.closest('.obsidian-drawer');
+      
+      const shouldBeSolid = isOverRibbon || isOverDrawer;
+      
+      // forward: true is essential on Windows to keep receiving mouse events
+      api.setIgnoreMouse(!shouldBeSolid, { forward: true });
+    };
+
+    window.addEventListener('mousemove', handleMouseTransparency);
+
     return () => {
       clearInterval(checkApi);
       cleanups.forEach(fn => fn());
+      window.removeEventListener('mousemove', handleMouseTransparency);
     };
   }, []);
 
@@ -122,41 +142,11 @@ const App: React.FC = () => {
 
   const handleClose = () => getApi().send('window-close');
 
-  // HOLOGRAM CONTROL
-  const onRibbonEnter = () => {
-    const api = getApi();
-    if (api && api.setIgnoreMouse) api.setIgnoreMouse(false);
-  };
-
-  const onRibbonLeave = () => {
-    if (showSettings) return;
-    const api = getApi();
-    if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
-  };
-
-  const onDrawerEnter = () => {
-    const api = getApi();
-    if (api && api.setIgnoreMouse) api.setIgnoreMouse(false);
-  };
-
-  const onDrawerLeave = () => {
-    const api = getApi();
-    if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const api = getApi();
-      if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
   if (!isReady) return null;
 
   return (
     <div className="app-wrapper">
-      <header className="ribbon-container" onMouseEnter={onRibbonEnter} onMouseLeave={onRibbonLeave}>
+      <header className="ribbon-container">
         {/* LEFT POD */}
         <div className="control-pod">
           <button className={`control-btn ${isCamouflaged ? 'active' : ''}`} onClick={handleToggleCamo} title="Stealth Camo">
@@ -170,8 +160,8 @@ const App: React.FC = () => {
           </button>
         </div>
 
-        {/* CENTER BRANDING: Native Native OS Drag Region */}
-        <div className="branding-pod drag-region" title="Drag to Move">
+        {/* CENTER BRANDING: Native Drag Region */}
+        <div className="branding-pod">
           <div className="system-heartbeat"></div>
           <h1 className="title">ALTUS AI</h1>
         </div>
@@ -192,11 +182,7 @@ const App: React.FC = () => {
 
       <main className="insight-window">
         {/* SETTINGS DRAWER */}
-        <div 
-          className={`obsidian-drawer ${showSettings ? 'open' : ''}`}
-          onMouseEnter={onDrawerEnter}
-          onMouseLeave={onDrawerLeave}
-        >
+        <div className={`obsidian-drawer ${showSettings ? 'open' : ''}`}>
            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: '20px'}}>
               <h2 style={{fontSize: '0.75rem', letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--ghost-accent)', fontWeight: 900}}>Security Vault</h2>
               <button className="control-btn mini" onClick={() => setShowSettings(false)}><ChevronRight size={18}/></button>

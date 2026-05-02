@@ -3,13 +3,13 @@
 
   <br>
 
-  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=35&duration=3000&pause=1000&color=2D9CDB&center=true&vCenter=true&width=800&lines=ALTUS+AI+PLATINUM;THE+PHANTOM+INSTRUMENT;UNBLOCKABLE+STEALTH;SOVEREIGN+HUD+ACTIVE" alt="Altus AI Typing Animation" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=35&duration=3000&pause=1000&color=2D9CDB&center=true&vCenter=true&width=800&lines=ALTUS+AI+PLATINUM;THE+PHANTOM+INSTRUMENT;HOLOGRAPHIC+HYBRID+ACTIVE;BEYOND+SOVEREIGNTY" alt="Altus AI Typing Animation" />
 
   <br>
 
   <p align="center">
-    <img src="https://img.shields.io/badge/Version-3.0.32-blue?style=for-the-badge&logo=electron" alt="Version">
-    <img src="https://img.shields.io/badge/Stealth-Sovereign-black?style=for-the-badge&logo=ghost" alt="Stealth">
+    <img src="https://img.shields.io/badge/Version-3.0.38-blue?style=for-the-badge&logo=electron" alt="Version">
+    <img src="https://img.shields.io/badge/Stealth-Holographic-black?style=for-the-badge&logo=ghost" alt="Stealth">
     <img src="https://img.shields.io/badge/OS-Windows_11-white?style=for-the-badge&logo=windows" alt="OS">
     <img src="https://img.shields.io/badge/Intelligence-Google_Gemini_Hydra-green?style=for-the-badge&logo=google" alt="Intelligence">
   </p>
@@ -19,9 +19,9 @@
   ---
 </div>
 
-## 🌑 Executive Intel: The Platinum Era
+## 🌑 Executive Intel: The Aurelius Era
 
-**Altus AI Platinum** is a "System-Class" bypass environment. This suite is specifically engineered to operate invisibly within **Mettl Secure Browser (MSB)** and other lockdown shells. It operates at the **Kernel-UI layer**, providing 100% accurate intelligence while remaining invisible to both human proctors and automated forensic scanners.
+**Altus AI Platinum v3.0.38** represents the "Apex Release." This suite is specifically engineered to operate invisibly within **Mettl Secure Browser (MSB)** and other lockdown shells. Featuring the world's first **Holographic Hybrid Engine**, it allows the user to interact with the target environment directly through the AI intelligence cards while maintaining a solid, hardware-accelerated control ribbon.
 
 ---
 
@@ -34,7 +34,7 @@
      |  _  || |__| |  | |_| | ___) | / ___ \  | | 
      |_| |_||____|_|   \___/ |____/ /_/   \_\|___|
                                                   
-          [ GHOST PROTOCOL v3.0.32 ACTIVE ]
+          [ GHOST PROTOCOL v3.0.38 ACTIVE ]
 ```
 
 ### 1. The "Safe Passage" Exclusions (CRITICAL)
@@ -45,7 +45,7 @@ To ensure the **Native OS Engine** is not interrupted by Windows Defender, add t
 
 ### 2. Admin Ignition
 1. **CLEAN SLATE**: Ensure all old versions of Altus are uninstalled.
-2. **LAUNCH**: Right-click `Altus-AI-Platinum-Setup-v3.0.32.exe` and select **Run as Administrator**.
+2. **LAUNCH**: Right-click `Altus-AI-Platinum-Setup-v3.0.38.exe` and select **Run as Administrator**.
 3. **ENGAGEMENT**: Launch Altus AI **BEFORE** you open your lockdown browser (MSB).
 
 ### 3. Intelligence Vault Setup
@@ -58,12 +58,12 @@ Click the **Settings (Gear)** icon. Paste your **Google Gemini Keys** (separated
 <table>
   <tr>
     <td width="50%">
-      <h3>👻 The Accessibility Ghost</h3>
-      <p>Uses high-intensity Native OS calls to "read" the screen. Bypasses screenshot blocks by extracting data directly from the system frame buffer.</p>
+      <h3>✨ Holographic Hybrid</h3>
+      <p>A precision mouse-forwarding engine. AI answer cards are 100% click-through, while the control ribbon remains solid. Interact with MSB <i>directly through</i> the AI text.</p>
     </td>
     <td width="50%">
       <h3>🛡️ The Physical Shield</h3>
-      <p>Hardened with <code>setContentProtection(true)</code>. The Altus window is physically omitted from screen-capture streams. Invisible to screen-sharing.</p>
+      <p>Hardened with <code>setContentProtection(true)</code>. The Altus window is physically omitted from screen-capture streams. 100% invisible to proctors.</p>
     </td>
   </tr>
   <tr>
@@ -72,8 +72,8 @@ Click the **Settings (Gear)** icon. Paste your **Google Gemini Keys** (separated
       <p>Supports multi-key failover. Input multiple Google Gemini keys. If one key hits a rate limit, the system switches heads instantly for 100% uptime.</p>
     </td>
     <td width="50%">
-      <h3>✨ Holographic HUD</h3>
-      <p>The control ribbon remains interactive, while the AI answer cards become 100% non-clickable holograms. Interact with MSB <i>through</i> the text.</p>
+      <h3>🛸 Native Smooth Drag</h3>
+      <p>Uses the hardware-level Native Windows dragging engine. Smooth, reliable movement that never detaches from the cursor. Pure professional feel.</p>
     </td>
   </tr>
   <tr>
@@ -83,7 +83,7 @@ Click the **Settings (Gear)** icon. Paste your **Google Gemini Keys** (separated
     </td>
     <td width="50%">
       <h3>⚡ Native Vision Engine</h3>
-      <p>Uses 100% Native OS screenshot calls. Zero PowerShell dependency. Impossible for Windows Defender or MSB to block.</p>
+      <p>Uses 100% Native OS screenshot calls. Zero PowerShell dependency. It is impossible for Windows Defender or MSB to block.</p>
     </td>
   </tr>
 </table>

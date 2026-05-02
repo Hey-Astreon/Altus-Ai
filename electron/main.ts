@@ -30,11 +30,17 @@ function requestLock() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 450, height: 650, frame: false, transparent: true,
-    alwaysOnTop: true, skipTaskbar: true, show: false,
+    width: 600, 
+    height: 750, 
+    frame: false, 
+    transparent: true,
+    alwaysOnTop: true, 
+    skipTaskbar: true, 
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false, contextIsolation: true,
+      nodeIntegration: false, 
+      contextIsolation: true,
     },
   });
 
@@ -110,34 +116,25 @@ app.whenReady().then(() => {
 
   stealthService.start();
   
-  // MSB DETECTION & DOMINANCE LOOP
   stealthService.on('msb-detected', () => {
     if (mainWindow) {
       mainWindow.setOpacity(0.4);
       mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
       mainWindow.setSkipTaskbar(true);
-      
       if (!mainWindow.isVisible()) mainWindow.show();
 
       if (!dominanceInterval) {
         dominanceInterval = setInterval(() => {
           if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
-            if (!mainWindow.isVisible()) mainWindow.show();
           }
-        }, 2000);
+        }, 5000);
       }
     }
   });
 });
 
 ipcMain.on('window-close', () => app.quit());
-ipcMain.on('move-window', (event, { x, y }) => {
-  if (mainWindow) {
-    const [currX, currY] = mainWindow.getPosition();
-    mainWindow.setPosition(currX + x, currY + y);
-  }
-});
 ipcMain.on('abort-solve', () => { isSolving = false; aiService?.abort(); });
 ipcMain.on('set-ignore-mouse', (event, ignore, forward) => {
   mainWindow?.setIgnoreMouseEvents(ignore, forward);
@@ -146,10 +143,12 @@ ipcMain.handle('get-settings', () => ({
   openrouter: settings.getKeys().join(', ') || process.env.GOOGLE_GEMINI_KEY || '',
   globalOpacity: 0.85
 }));
+
 ipcMain.on('save-keys', (event, { openrouter }) => {
   if (openrouter) settings.saveKeys(openrouter.split(',').map((k: any) => k.trim()));
   aiService = null;
 });
+
 ipcMain.on('capture-screen', () => performVisionSolve());
 ipcMain.on('toggle-auto-vision', (event, enabled) => { 
   isAutoVisionEnabled = enabled; 
