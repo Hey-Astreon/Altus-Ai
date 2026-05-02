@@ -109,6 +109,12 @@ const App: React.FC = () => {
     setShowSettings(false);
   };
 
+  const handleToggleCamo = () => {
+    const newState = !isCamouflaged;
+    setIsCamouflaged(newState);
+    getApi().send('set-opacity', newState ? 0.4 : 1.0);
+  };
+
   const handleOpacityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setAppOpacity(val);
@@ -148,7 +154,7 @@ const App: React.FC = () => {
         
         {/* RIGHT POD */}
         <div className="control-pod">
-          <button className={`control-btn ${isCamouflaged ? 'active' : ''}`} onClick={() => setIsCamouflaged(!isCamouflaged)} title="Stealth Camo">
+          <button className={`control-btn ${isCamouflaged ? 'active' : ''}`} onClick={handleToggleCamo} title="Stealth Camo">
             <Shield size={17} />
           </button>
           <button className="control-btn" onClick={clearAll} title="Clear Stream">
