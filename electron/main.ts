@@ -89,6 +89,20 @@ app.whenReady().then(() => {
   if (!requestLock()) return;
   createWindow();
   
+  const iconPath = isDev ? path.join(__dirname, '../assets/icon.png') : path.join(process.resourcesPath, 'assets/icon.png');
+  try {
+    tray = new Tray(iconPath);
+    const contextMenu = Menu.buildFromTemplate([
+      { label: 'Show', click: () => mainWindow?.show() },
+      { label: 'Exit', click: () => app.quit() }
+    ]);
+    tray.setContextMenu(contextMenu);
+    tray.on('click', () => {
+      if (mainWindow?.isVisible()) mainWindow.hide();
+      else mainWindow?.show();
+    });
+  } catch (e) {}
+
   globalShortcut.register('CommandOrControl+Shift+V', () => {
     if (mainWindow?.isVisible()) mainWindow.hide(); else mainWindow?.show();
   });
@@ -105,19 +119,17 @@ app.whenReady().then(() => {
       
       if (!mainWindow.isVisible()) mainWindow.show();
 
-      // START DOMINANCE LOOP: Ensure we stay on top of the kiosk every 5 seconds
+      // START DOMINANCE LOOP: Ensure we stay on top of the kiosk every 2 seconds
       if (!dominanceInterval) {
         dominanceInterval = setInterval(() => {
           if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
             if (!mainWindow.isVisible()) mainWindow.show();
           }
-        }, 5000);
+        }, 2000);
       }
     }
   });
-
-  // START ACCESSIBILITY BRIDGE fallback (silent)
 });
 
 ipcMain.on('window-close', () => app.quit());
