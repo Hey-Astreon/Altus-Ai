@@ -31,13 +31,10 @@ const App: React.FC = () => {
 
   useEffect(() => {
     let cleanups: (() => void)[] = [];
-    
-    // TACTICAL DELAY: Wait for Electron Bridge
     const checkApi = setInterval(() => {
       const api = getApi();
       if (api) {
         clearInterval(checkApi);
-        
         api.getSettings().then((data: any) => {
           setTempKeys({ openrouter: data.openrouter || '' });
           setAppOpacity(data.globalOpacity || 0.85);
@@ -71,9 +68,22 @@ const App: React.FC = () => {
       }
     }, 50);
 
+    // GLOBAL DRAG ENGINE: Magnet-style tracking
+    const handleGlobalDrag = (e: MouseEvent) => {
+      if (e.buttons === 1) {
+        const target = e.target as HTMLElement;
+        if (target.closest('.drag-trigger')) {
+          getApi().send('move-window', { x: e.movementX, y: e.movementY });
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', handleGlobalDrag);
+
     return () => {
       clearInterval(checkApi);
       cleanups.forEach(fn => fn());
+      window.removeEventListener('mousemove', handleGlobalDrag);
     };
   }, []);
 
@@ -126,14 +136,14 @@ const App: React.FC = () => {
 
   const handleClose = () => getApi().send('window-close');
 
-  // HOLOGRAM LOGIC
+  // HOLOGRAM CONTROL
   const onRibbonEnter = () => {
     const api = getApi();
     if (api && api.setIgnoreMouse) api.setIgnoreMouse(false);
   };
 
   const onRibbonLeave = () => {
-    if (showSettings) return; // Keep solid if settings are open
+    if (showSettings) return;
     const api = getApi();
     if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
   };
@@ -148,13 +158,7 @@ const App: React.FC = () => {
     if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
   };
 
-  const handleDrag = (e: React.MouseEvent) => {
-    if (e.buttons !== 1) return; // Only drag on left click
-    getApi().send('move-window', { x: e.movementX, y: e.movementY });
-  };
-
   useEffect(() => {
-    // Initial State: Hologram Mode (Click-through)
     const timer = setTimeout(() => {
       const api = getApi();
       if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
@@ -188,7 +192,7 @@ const App: React.FC = () => {
         
         {/* RIGHT POD */}
         <div className="control-pod">
-          <div className="control-btn drag-trigger" onMouseMove={handleDrag} style={{cursor: 'move'}} title="Drag to Move Altus">
+          <div className="control-btn drag-trigger" style={{cursor: 'move'}} title="Hold to Move Altus">
             <Move size={17} />
           </div>
           <button className="control-btn" onClick={clearAll} title="Clear Stream">
