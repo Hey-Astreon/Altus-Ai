@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, Tray, Menu, ipcMain, screen, desktopCapturer } from 'electron';
+import { app, BrowserWindow, globalShortcut, Tray, Menu, ipcMain, screen } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import * as dotenv from 'dotenv';
@@ -37,6 +37,7 @@ function createWindow() {
     alwaysOnTop: true, 
     skipTaskbar: true, 
     show: false,
+    type: 'toolbar', // System-level toolbar behavior
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false, 
@@ -46,6 +47,9 @@ function createWindow() {
 
   mainWindow.setContentProtection(true);
 
+  // DESKTOP MIGRATION: Ensure window exists on virtual desktops/exam shells
+  mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
   const startUrl = isDev ? 'http://localhost:5173' : path.join(__dirname, '../dist/index.html');
   if (isDev) mainWindow.loadURL(startUrl); else mainWindow.loadFile(startUrl);
 
@@ -53,7 +57,20 @@ function createWindow() {
     mainWindow?.center();
     mainWindow?.setOpacity(1.0);
     mainWindow?.show();
+    startDominanceLoop(); // Start immediately for maximum sovereignty
   });
+}
+
+function startDominanceLoop() {
+  if (dominanceInterval) return;
+  dominanceInterval = setInterval(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      // MAXIMUM SOVEREIGNTY: Punch through Desktop Switches and Kiosks
+      mainWindow.setAlwaysOnTop(true, 'screen-saver', 99); // Max priority
+      mainWindow.showInactive(); // Force visibility without stealing focus
+      mainWindow.moveTop(); // Bring to the absolute front of the Z-stack
+    }
+  }, 2000);
 }
 
 async function performVisionSolve(customText?: string) {
@@ -65,7 +82,7 @@ async function performVisionSolve(customText?: string) {
     if (keys.length === 0 && process.env.GOOGLE_GEMINI_KEY) keys = [process.env.GOOGLE_GEMINI_KEY];
     
     if (keys.length === 0) {
-      mainWindow.webContents.send('ai-error', 'CRITICAL: No API Keys in Vault.');
+      mainWindow.webContents.send('ai-error', 'CRITICAL: No API Keys. Paste in Settings.');
       return;
     }
     
@@ -85,7 +102,7 @@ async function performVisionSolve(customText?: string) {
       await aiService.getAnswer('Solve the exam question in this image. Be concise.', image);
     }
   } catch (error: any) {
-    mainWindow.webContents.send('ai-error', `System Fault: ${error.message}`);
+    mainWindow.webContents.send('ai-error', `Fault: ${error.message}`);
   } finally {
     isSolving = false;
   }
@@ -115,23 +132,6 @@ app.whenReady().then(() => {
   globalShortcut.register('CommandOrControl+Shift+S', () => performVisionSolve());
 
   stealthService.start();
-  
-  stealthService.on('msb-detected', () => {
-    if (mainWindow) {
-      mainWindow.setOpacity(0.4);
-      mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
-      mainWindow.setSkipTaskbar(true);
-      if (!mainWindow.isVisible()) mainWindow.show();
-
-      if (!dominanceInterval) {
-        dominanceInterval = setInterval(() => {
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
-          }
-        }, 5000);
-      }
-    }
-  });
 });
 
 ipcMain.on('window-close', () => app.quit());
@@ -143,12 +143,10 @@ ipcMain.handle('get-settings', () => ({
   openrouter: settings.getKeys().join(', ') || process.env.GOOGLE_GEMINI_KEY || '',
   globalOpacity: 0.85
 }));
-
 ipcMain.on('save-keys', (event, { openrouter }) => {
   if (openrouter) settings.saveKeys(openrouter.split(',').map((k: any) => k.trim()));
   aiService = null;
 });
-
 ipcMain.on('capture-screen', () => performVisionSolve());
 ipcMain.on('toggle-auto-vision', (event, enabled) => { 
   isAutoVisionEnabled = enabled; 
