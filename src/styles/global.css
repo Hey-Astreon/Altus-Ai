@@ -21,8 +21,10 @@ body {
 
 .app-wrapper {
   height: 100vh;
-  width: 100vw;
-  padding: 8px; /* TIGHTER PADDING */
+  width: 100%; /* FOLLOW WINDOW WIDTH */
+  max-width: 450px; /* LOCK MAX WIDTH */
+  margin: 0 auto;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -34,27 +36,26 @@ body {
 /* RIBBON: THE COMMAND CENTER */
 .ribbon-container {
   display: grid;
-  grid-template-columns: auto 1fr auto; /* TIGHTER LAYOUT */
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   background: var(--ghost-bg);
   backdrop-filter: blur(40px);
   border: 1px solid var(--ghost-border);
   border-radius: 10px;
   padding: 0 12px;
-  height: 42px; /* SLEEKER HEIGHT */
+  height: 42px;
+  min-height: 42px;
   flex-shrink: 0;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-  -webkit-app-region: no-drag;
 }
 
 .drag-region {
-  -webkit-app-region: drag;
   cursor: grab;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 20px;
+  flex: 1;
 }
 
 .drag-region:active { cursor: grabbing; }
@@ -63,20 +64,20 @@ body {
   display: flex; 
   gap: 4px; 
   align-items: center; 
-  -webkit-app-region: no-drag; 
 }
 
 .control-pod:last-child { justify-content: flex-end; }
 .branding-pod { display: flex; align-items: center; gap: 8px; justify-content: center; }
 
 .title {
-  font-size: 0.65rem; /* SLEEKER TEXT */
+  font-size: 0.65rem;
   font-weight: 900;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: #fff;
   opacity: 0.9;
-  pointer-events: none; /* Let drag pass through to container */
+  user-select: none;
+  pointer-events: none;
 }
 
 .system-heartbeat {
@@ -118,7 +119,6 @@ body {
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   transition: all 0.1s;
-  -webkit-app-region: no-drag;
 }
 
 .control-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
@@ -199,7 +199,6 @@ body {
   box-shadow: 0 20px 80px rgba(0, 0, 0, 1);
   transform: translateY(-110%);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  -webkit-app-region: no-drag;
 }
 
 .obsidian-drawer.open { transform: translateY(0); }
