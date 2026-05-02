@@ -30,7 +30,7 @@ function requestLock() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800, height: 800, frame: false, transparent: true,
+    width: 450, height: 650, frame: false, transparent: true,
     alwaysOnTop: true, skipTaskbar: true, show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
