@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('api', {
       'capture-screen', 
       'toggle-auto-vision',
       'abort-solve',
+      'move-window',
       'set-ignore-mouse',
       'set-camouflage',
       'install-update'

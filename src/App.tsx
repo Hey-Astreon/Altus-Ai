@@ -148,25 +148,21 @@ const App: React.FC = () => {
     if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
   };
 
+  const handleDrag = (e: React.MouseEvent) => {
+    if (e.buttons !== 1) return; // Only drag on left click
+    getApi().send('move-window', { x: e.movementX, y: e.movementY });
+  };
+
   useEffect(() => {
-    // Hologram initialization
-    const timer = setTimeout(() => {
-      const api = getApi();
-      if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!isReady) return null;
-
+...
   return (
     <div className="app-wrapper">
       <header className="ribbon-container" onMouseEnter={onRibbonEnter} onMouseLeave={onRibbonLeave}>
         {/* LEFT POD */}
         <div className="control-pod">
-          <div className="drag-handle" title="Hold to Move Altus">
-            <Move size={14} />
-          </div>
+          <button className={`control-btn ${isCamouflaged ? 'active' : ''}`} onClick={handleToggleCamo} title="Stealth Camo">
+            <Shield size={17} />
+          </button>
           <button className={`control-btn ${isThinking ? 'thinking-pulse' : ''}`} onClick={handleCapture} title="Manual Solve">
             <Eye size={17} />
           </button>
@@ -183,9 +179,9 @@ const App: React.FC = () => {
         
         {/* RIGHT POD */}
         <div className="control-pod">
-          <button className={`control-btn ${isCamouflaged ? 'active' : ''}`} onClick={handleToggleCamo} title="Stealth Camo">
-            <Shield size={17} />
-          </button>
+          <div className="control-btn drag-trigger" onMouseMove={handleDrag} style={{cursor: 'move'}} title="Drag to Move Altus">
+            <Move size={17} />
+          </div>
           <button className="control-btn" onClick={clearAll} title="Clear Stream">
             <Trash2 size={17} />
           </button>
