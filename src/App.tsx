@@ -131,11 +131,30 @@ const App: React.FC = () => {
 
   const handleClose = () => getApi().send('window-close');
 
+  const onRibbonEnter = () => {
+    const api = getApi();
+    if (api && api.setIgnoreMouse) api.setIgnoreMouse(false);
+  };
+
+  const onRibbonLeave = () => {
+    const api = getApi();
+    if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
+  };
+
+  useEffect(() => {
+    // Initial State: Hologram Mode (Click-through)
+    const timer = setTimeout(() => {
+      const api = getApi();
+      if (api && api.setIgnoreMouse) api.setIgnoreMouse(true, { forward: true });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
   if (!isReady) return null; // PREVENT RENDER UNTIL BRIDGE ACTIVE
 
   return (
     <div className="app-wrapper">
-      <header className="ribbon-container">
+      <header className="ribbon-container" onMouseEnter={onRibbonEnter} onMouseLeave={onRibbonLeave}>
         {/* LEFT POD */}
         <div className="control-pod">
           <button className={`control-btn ${isThinking ? 'thinking-pulse' : ''}`} onClick={handleCapture} title="Manual Solve">

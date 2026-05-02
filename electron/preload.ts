@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('api', {
       'capture-screen', 
       'toggle-auto-vision',
       'abort-solve',
+      'set-ignore-mouse',
       'set-camouflage',
       'install-update'
     ];
@@ -29,6 +30,8 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.send(channel, data);
     }
   },
+
+  setIgnoreMouse: (ignore: boolean, forward?: { forward: boolean }) => ipcRenderer.send('set-ignore-mouse', ignore, forward),
 
   handle: async (channel: string, data?: any) => {
     const validChannels = ['get-settings'];

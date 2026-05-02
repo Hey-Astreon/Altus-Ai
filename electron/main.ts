@@ -144,6 +144,9 @@ app.whenReady().then(() => {
 
 ipcMain.on('window-close', () => app.quit());
 ipcMain.on('abort-solve', () => { isSolving = false; aiService?.abort(); });
+ipcMain.on('set-ignore-mouse', (event, ignore, forward) => {
+  mainWindow?.setIgnoreMouseEvents(ignore, forward);
+});
 ipcMain.handle('get-settings', () => ({
   openrouter: settings.getKeys().join(', ') || process.env.GOOGLE_GEMINI_KEY || '',
   globalOpacity: 0.85
