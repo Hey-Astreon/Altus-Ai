@@ -6,8 +6,7 @@ import {
   Shield, 
   ChevronRight,
   X,
-  Zap,
-  Move
+  Zap
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -68,22 +67,9 @@ const App: React.FC = () => {
       }
     }, 50);
 
-    // GLOBAL DRAG ENGINE: Magnet-style tracking
-    const handleGlobalDrag = (e: MouseEvent) => {
-      if (e.buttons === 1) {
-        const target = e.target as HTMLElement;
-        if (target.closest('.drag-trigger')) {
-          getApi().send('move-window', { x: e.movementX, y: e.movementY });
-        }
-      }
-    };
-
-    window.addEventListener('mousemove', handleGlobalDrag);
-
     return () => {
       clearInterval(checkApi);
       cleanups.forEach(fn => fn());
-      window.removeEventListener('mousemove', handleGlobalDrag);
     };
   }, []);
 
@@ -185,16 +171,13 @@ const App: React.FC = () => {
         </div>
 
         {/* CENTER BRANDING */}
-        <div className="branding-pod">
+        <div className="branding-pod drag-region" title="Hold to Move Altus">
           <div className={`system-heartbeat ${autoVision ? 'auto-pilot' : ''} ${updateAvailable ? 'update-available' : ''}`}></div>
           <h1 className="title">ALTUS AI</h1>
         </div>
         
         {/* RIGHT POD */}
         <div className="control-pod">
-          <div className="control-btn drag-trigger" style={{cursor: 'move'}} title="Hold to Move Altus">
-            <Move size={17} />
-          </div>
           <button className="control-btn" onClick={clearAll} title="Clear Stream">
             <Trash2 size={17} />
           </button>
