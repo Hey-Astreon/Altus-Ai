@@ -50,6 +50,8 @@ export class GeminiService extends EventEmitter {
         new Promise((_, reject) => setTimeout(() => reject(new Error('Intelligence Link Timeout')), 15000))
       ]) as any;
       
+      if (!result || !result.stream) throw new Error('Invalid Intelligence Stream');
+      
       let fullText = '';
       for await (const chunk of result.stream) {
         if (!this.isStreaming) break;

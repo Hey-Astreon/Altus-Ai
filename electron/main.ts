@@ -95,6 +95,7 @@ async function performVisionSolve(customText?: string) {
     
     if (keys.length === 0) {
       mainWindow.webContents.send('ai-error', 'CRITICAL: No API Keys. Paste in Settings.');
+      isSolving = false; // RESET LOCK
       return;
     }
     
